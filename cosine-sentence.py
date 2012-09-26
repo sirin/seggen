@@ -89,12 +89,23 @@ def compare(doc1,doc2):
  	v2=doc_vec(doc2,key_idx)
  	return float(dot(v1,v2) / (norm(v1) * norm(v2)))
 
+def calculate_cohesion(seg):
+    sumseg = 0
+    for prv, nxt in zip(seg, seg[1:]):
+        sumseg +=  compare(prv,nxt)
+    return sumseg / len(seg)
+
+
 if __name__ == '__main__':
- print "Running Test..." 
+ print "Running Test..."
+ #to automatize creating and appending docs
  doc1=make_pre_steps("I like to eat chicken noodle soup.")
  doc2=make_pre_steps("I have read the book Chicken noodle soup for the soul.")
- print "Using Doc1: %s\n\nUsing Doc2: %s\n" % ( doc1, doc2 )
- print "Similarity %s" % compare(doc1,doc2)
+ doc3 = make_pre_steps("We like souls of booking not chicks.")
+ doc4 = make_pre_steps("Sometimes I want to eat noodle when read books.")
+ L= []
+ L = [doc1,doc2,doc3,doc4]
+ print "Cohesion of the given segment is: %s" % calculate_cohesion(L)
 
 
 
