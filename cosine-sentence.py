@@ -95,6 +95,12 @@ def calculate_cohesion(seg):
         sumseg +=  compare(prv,nxt)
     return sumseg / len(seg)
 
+def fill_sentences_list(all_sentences,sentence):
+    all_sentences.append(sentence)
+    return all_sentences
+
+#def get_segments_from_individual(individual,sentences):
+
 
 if __name__ == '__main__':
  print "Running Test..."
@@ -106,6 +112,11 @@ if __name__ == '__main__':
  L= []
  L = [doc1,doc2,doc3,doc4]
  print "Cohesion of the given segment is: %s" % calculate_cohesion(L)
+ test_sentences = []
+ for i in open("/home/sirin/Desktop/seggen/sample-sentences.txt"):
+     fill_sentences_list(test_sentences,i)
+ #there is a gap where converting sentences list to individual binary vector
+ #it will be appended later
 
 
 
