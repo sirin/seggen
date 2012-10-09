@@ -1,5 +1,4 @@
 from nltk.tokenize import word_tokenize
-from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm 
@@ -59,7 +58,6 @@ def make_pre_steps(text):
 		"-" : " "
 	}
 	stopwords = []
-	lemmatizer = WordNetLemmatizer()
 	porter = PorterStemmer()
 	for i in open("/home/sirin/Desktop/seggen/stopwords.txt"):
 		stopwords.append(i.replace("\r\n",""))
@@ -67,7 +65,6 @@ def make_pre_steps(text):
 	words = word_tokenize(text)
 	words = [word.lower() for word in words]
 	words = clear_stopwords(words, stopwords)
-	words = [lemmatizer.lemmatize(word) for word in words]
 	words = [porter.stem(word) for word in words]
 	return words
 
@@ -91,9 +88,11 @@ def compare(doc1,doc2):
 
 def calculate_cohesion(seg):
     sumseg = 0
+    couple_len = 0
     for prv, nxt in zip(seg, seg[1:]):
         sumseg +=  compare(prv,nxt)
-    return sumseg / len(seg)
+        couple_len += 1
+    return sumseg / couple_len
 
 def fill_sentences_list(all_sentences,sentence):
     all_sentences.append(sentence)
@@ -103,20 +102,14 @@ def fill_sentences_list(all_sentences,sentence):
 
 
 if __name__ == '__main__':
- print "Running Test..."
- #to automatize creating and appending docs
- doc1=make_pre_steps("I like to eat chicken noodle soup.")
- doc2=make_pre_steps("I have read the book Chicken noodle soup for the soul.")
- doc3 = make_pre_steps("We like souls of booking not chicks.")
- doc4 = make_pre_steps("Sometimes I want to eat noodle when read books.")
- L= []
- L = [doc1,doc2,doc3,doc4]
- print "Cohesion of the given segment is: %s" % calculate_cohesion(L)
- test_sentences = []
- for i in open("/home/sirin/Desktop/seggen/sample-sentences.txt"):
-     fill_sentences_list(test_sentences,i)
- #there is a gap where converting sentences list to individual binary vector
- #it will be appended later
+    print "Running Test..."
+    #to automatize creating and appending docs
+    test_sentences = []
+    for i in open("/home/sirin/Desktop/seggen/sample.txt"):
+        fill_sentences_list(test_sentences,make_pre_steps(i))
+    #there is a gap where converting sentences list to individual binary vector
+    #it will be appended later
+    print calculate_cohesion(test_sentences)
 
 
 
