@@ -59,8 +59,8 @@ def make_pre_steps(text):
 	}
 	stopwords = []
 	porter = PorterStemmer()
-	for i in open("/home/sirin/Desktop/seggen/stopwords.txt"):
-		stopwords.append(i.replace("\r\n",""))
+	for i in open("/home/sirin/workspace/seggen/stopwords.txt"):
+		stopwords.append(i.replace("\n",""))
 	text = replace_all(text, replacement_chars)
 	words = word_tokenize(text)
 	words = [word.lower() for word in words]
@@ -98,18 +98,34 @@ def fill_sentences_list(all_sentences,sentence):
     all_sentences.append(sentence)
     return all_sentences
 
-#def get_segments_from_individual(individual,sentences):
+def get_segments_from_individual(individual, sentences, segments):
+    temp = []
+    for i, j in zip(individual,range(len(sentences))):
+        temp.append(sentences[j])
+        if i == 1:
+            #print j
+            fill_sentences_list(segments,temp)
+            #print temp
+            temp = []
+    temp.append(sentences[-1])
+    fill_sentences_list(segments,temp)
+    temp = []
+    return segments
 
 
 if __name__ == '__main__':
     print "Running Test..."
     #to automatize creating and appending docs
     test_sentences = []
-    for i in open("/home/sirin/Desktop/seggen/sample.txt"):
+    for i in open("/home/sirin/workspace/seggen/sample.txt"):
         fill_sentences_list(test_sentences,make_pre_steps(i))
     #there is a gap where converting sentences list to individual binary vector
     #it will be appended later
-    print calculate_cohesion(test_sentences)
+    #print calculate_cohesion(test_sentences)
+    ind = [0,0,0,0,0,0,0,0]
+    test = [1,2,3,4,5,6,7,8,9]
+    seg = []
+    print get_segments_from_individual(ind,test,seg)
 
 
 
