@@ -112,6 +112,13 @@ def get_segments_from_individual(individual, sentences, segments):
     temp = []
     return segments
 
+def calculate_simseg(segment1, segment2):
+    divisor = len(segment1) * len(segment2)
+    sumsim = 0.0
+    for x, y in [(x,y) for x in segment1 for y in segment2]:
+        sumsim += compare(x,y)
+    return sumsim / divisor
+
 
 if __name__ == '__main__':
     print "Running Test..."
@@ -122,10 +129,13 @@ if __name__ == '__main__':
     #there is a gap where converting sentences list to individual binary vector
     #it will be appended later
     #print calculate_cohesion(test_sentences)
-    ind = [0,0,0,0,0,0,0,0]
-    test = [1,2,3,4,5,6,7,8,9]
+    ind = [0,0,1]
     seg = []
-    print get_segments_from_individual(ind,test,seg)
+    print get_segments_from_individual(ind,test_sentences,seg)
+    l1 = ["I like to eat chicken noodle soup.","I have read the book Chicken noodle soup for the soul.","We like souls of booking not chicks."]
+    l2 = ["Sometimes I want to eat noodle when read books."]
+    print calculate_simseg(l1, l2)
+
 
 
 
