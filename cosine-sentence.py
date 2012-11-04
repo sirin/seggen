@@ -87,12 +87,17 @@ def compare(doc1,doc2):
  	return float(dot(v1,v2) / (norm(v1) * norm(v2)))
 
 def calculate_cohesion(seg):
-    sumseg = 0
+    sumseg = 0.0
     couple_len = 0
-    for prv, nxt in zip(seg, seg[1:]):
-        sumseg +=  compare(prv,nxt)
-        couple_len += 1
-    return sumseg / couple_len
+    if len(seg) > 1:
+        for prv, nxt in zip(seg, seg[1:]):
+            sumseg +=  compare(prv,nxt)
+            couple_len += 1
+        return sumseg / couple_len
+    else:
+        return 1 #TODO check this point and fix it!
+
+
 
 def fill_sentences_list(all_sentences,sentence):
     all_sentences.append(sentence)
@@ -119,6 +124,17 @@ def calculate_simseg(segment1, segment2):
         sumsim += compare(x,y)
     return sumsim / divisor
 
+def calculate_dissimilarity(segment_list):
+    dissimilarity = 0.0
+    compare_len = 0
+    if len(segment_list) > 1:
+        for prv, nxt in zip(segment_list, segment_list[1:]):
+            dissimilarity += calculate_simseg(prv,nxt)
+            compare_len += 1
+        return (1.0 -(dissimilarity / compare_len))
+    else:
+        return 0 #TODO check this point and fix it!
+
 
 if __name__ == '__main__':
     print "Running Test..."
@@ -128,13 +144,15 @@ if __name__ == '__main__':
         fill_sentences_list(test_sentences,make_pre_steps(i))
     #there is a gap where converting sentences list to individual binary vector
     #it will be appended later
-    #print calculate_cohesion(test_sentences)
+    print 'Test sentenceses are: %s.' % test_sentences
     ind = [0,0,1]
-    seg = []
-    print get_segments_from_individual(ind,test_sentences,seg)
-    l1 = ["I like to eat chicken noodle soup.","I have read the book Chicken noodle soup for the soul.","We like souls of booking not chicks."]
-    l2 = ["Sometimes I want to eat noodle when read books."]
-    print calculate_simseg(l1, l2)
+    print 'Individual vector is: %s.' % ind
+    segment_list = []
+    segment_list = get_segments_from_individual(ind,test_sentences,segment_list)
+    print 'Segment list for individual vector: %s.' % segment_list
+    for i in segment_list:
+        print 'Internal cohesion of each segment is: %s.' %calculate_cohesion(i)
+    print 'Dissimilarity of adjacent segments is: %s.' %calculate_dissimilarity(segment_list)
 
 
 
