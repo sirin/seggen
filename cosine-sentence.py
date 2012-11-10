@@ -103,6 +103,7 @@ def fill_sentences_list(all_sentences,sentence):
     all_sentences.append(sentence)
     return all_sentences
 
+#TODO Be sure that individual list has n-1 elements when sentences has n elements!!!
 def get_segments_from_individual(individual, sentences, segments):
     temp = []
     for i, j in zip(individual,range(len(sentences))):
