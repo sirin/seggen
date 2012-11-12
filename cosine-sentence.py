@@ -5,12 +5,12 @@ from numpy.linalg import norm
 
 def replace_all(text, dic):
     for i, j in dic.iteritems():
-	    text = text.replace(i, j)
+        text = text.replace(i, j)
     return text
 
 def clear_stopwords(words, stopwords):
     for stopword in stopwords:
-	    words = filter(lambda x:x!=stopword, words)
+        words = filter(lambda x:x!=stopword, words)
     return words
 
 def add_word(all_words, word):
@@ -20,9 +20,9 @@ def add_word(all_words, word):
 def doc_vec(doc,key_idx):
     v=zeros(len(key_idx))
     for word in doc:
-	    keydata=key_idx.get(word, None)
-	    if keydata:
-		    v[keydata[0]] = 1
+        keydata=key_idx.get(word, None)
+        if keydata:
+            v[keydata[0]] = 1
     return v
 
 def make_pre_steps(text):
@@ -56,11 +56,11 @@ def make_pre_steps(text):
 		';' : ' ',
 		'_' : ' ',
 		"-" : " "
-	}
+    }
     stopwords = []
     porter = PorterStemmer()
     for i in open("/home/sirin/workspace/seggen/stopwords.txt"):
-	    stopwords.append(i.replace("\n",""))
+        stopwords.append(i.replace("\n",""))
     text = replace_all(text, replacement_chars)
     words = word_tokenize(text)
     words = [word.lower() for word in words]
@@ -71,14 +71,14 @@ def make_pre_steps(text):
 def compare(doc1,doc2):
     all_words=dict()
     for w in doc1:
-	    add_word(all_words,w)
+        add_word(all_words,w)
     for w in doc2:
-	    add_word(all_words,w)
+        add_word(all_words,w)
     key_idx=dict() # key-> ( position, count )
     keys=all_words.keys()
     keys.sort()
     for i in range(len(keys)):
-  	    key_idx[keys[i]] = (i,all_words[keys[i]])
+        key_idx[keys[i]] = (i,all_words[keys[i]])
     del keys
     del all_words
 
