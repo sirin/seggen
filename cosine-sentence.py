@@ -4,29 +4,29 @@ from numpy import zeros,dot
 from numpy.linalg import norm 
 
 def replace_all(text, dic):
-	for i, j in dic.iteritems():
-		text = text.replace(i, j)
-	return text
+    for i, j in dic.iteritems():
+	    text = text.replace(i, j)
+    return text
 
 def clear_stopwords(words, stopwords):
-	for stopword in stopwords:
-		words = filter(lambda x:x!=stopword, words)
-	return words
+    for stopword in stopwords:
+	    words = filter(lambda x:x!=stopword, words)
+    return words
 
 def add_word(all_words, word):
-	all_words.setdefault(word,0)
-	all_words[word] += 1
+    all_words.setdefault(word,0)
+    all_words[word] += 1
 
 def doc_vec(doc,key_idx):
-	v=zeros(len(key_idx))
-	for word in doc:
-		keydata=key_idx.get(word, None)
-		if keydata: 
-			v[keydata[0]] = 1
-	return v
+    v=zeros(len(key_idx))
+    for word in doc:
+	    keydata=key_idx.get(word, None)
+	    if keydata:
+		    v[keydata[0]] = 1
+    return v
 
 def make_pre_steps(text):
-	replacement_chars = {
+    replacement_chars = {
 		"1" : " ","2" : " ","3" : " ","4" : " ","5" : " ","6" : " ","7" : " ","8" : " ","9" : " ","0" : " ",
 		"\n" : " ",
 		"/t" : " ",
@@ -57,34 +57,34 @@ def make_pre_steps(text):
 		'_' : ' ',
 		"-" : " "
 	}
-	stopwords = []
-	porter = PorterStemmer()
-	for i in open("/home/sirin/workspace/seggen/stopwords.txt"):
-		stopwords.append(i.replace("\n",""))
-	text = replace_all(text, replacement_chars)
-	words = word_tokenize(text)
-	words = [word.lower() for word in words]
-	words = clear_stopwords(words, stopwords)
-	words = [porter.stem(word) for word in words]
-	return words
+    stopwords = []
+    porter = PorterStemmer()
+    for i in open("/home/sirin/workspace/seggen/stopwords.txt"):
+	    stopwords.append(i.replace("\n",""))
+    text = replace_all(text, replacement_chars)
+    words = word_tokenize(text)
+    words = [word.lower() for word in words]
+    words = clear_stopwords(words, stopwords)
+    words = [porter.stem(word) for word in words]
+    return words
 
 def compare(doc1,doc2):
-	all_words=dict()
-	for w in doc1:
-		add_word(all_words,w)
-	for w in doc2:
-		add_word(all_words,w)
-	key_idx=dict() # key-> ( position, count )
- 	keys=all_words.keys()
- 	keys.sort()
- 	for i in range(len(keys)):
-  		key_idx[keys[i]] = (i,all_words[keys[i]])
- 	del keys
- 	del all_words
+    all_words=dict()
+    for w in doc1:
+	    add_word(all_words,w)
+    for w in doc2:
+	    add_word(all_words,w)
+    key_idx=dict() # key-> ( position, count )
+    keys=all_words.keys()
+    keys.sort()
+    for i in range(len(keys)):
+  	    key_idx[keys[i]] = (i,all_words[keys[i]])
+    del keys
+    del all_words
 
- 	v1=doc_vec(doc1,key_idx)
- 	v2=doc_vec(doc2,key_idx)
- 	return float(dot(v1,v2) / (norm(v1) * norm(v2)))
+    v1=doc_vec(doc1,key_idx)
+    v2=doc_vec(doc2,key_idx)
+    return float(dot(v1,v2) / (norm(v1) * norm(v2)))
 
 def calculate_cohesion(seg):
     sumseg = 0.0
@@ -97,24 +97,22 @@ def calculate_cohesion(seg):
     else:
         return 1 #TODO check this point and fix it!
 
-
-
 def fill_sentences_list(all_sentences,sentence):
     all_sentences.append(sentence)
     return all_sentences
 
-def get_segments_from_individual(individual, sentences, segments):
+def get_segments_from_individual(individual, sentences):
     temp = []
+    segments = []
     for i, j in zip(individual,range(len(sentences))):
         temp.append(sentences[j])
         if i == 1:
-            #print j
             fill_sentences_list(segments,temp)
-            #print temp
             temp = []
-    temp.append(sentences[-1])
-    fill_sentences_list(segments,temp)
-    temp = []
+    if len(sentences) == len(individual)+1:
+        temp.append(sentences[-1])
+        fill_sentences_list(segments,temp)
+        temp = []
     return segments
 
 def calculate_simseg(segment1, segment2):
@@ -144,15 +142,15 @@ if __name__ == '__main__':
         fill_sentences_list(test_sentences,make_pre_steps(i))
     #there is a gap where converting sentences list to individual binary vector
     #it will be appended later
-    print 'Test sentenceses are: %s.' % test_sentences
+    print 'Test sentences are: %s' % test_sentences
     ind = [0,0,1]
-    print 'Individual vector is: %s.' % ind
+    print 'Individual vector is: %s' % ind
     segment_list = []
-    segment_list = get_segments_from_individual(ind,test_sentences,segment_list)
-    print 'Segment list for individual vector: %s.' % segment_list
+    segment_list = get_segments_from_individual(ind,test_sentences)
+    print 'Segment list for individual vector: %s' % segment_list
     for i in segment_list:
-        print 'Internal cohesion of each segment is: %s.' %calculate_cohesion(i)
-    print 'Dissimilarity of adjacent segments is: %s.' %calculate_dissimilarity(segment_list)
+        print 'Internal cohesion of each segment is: %s' % calculate_cohesion(i)
+    print 'Dissimilarity of adjacent segments is: %s' % calculate_dissimilarity(segment_list)
 
 
 
