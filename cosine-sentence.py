@@ -95,7 +95,16 @@ def calculate_cohesion(seg):
             couple_len += 1
         return sumseg / couple_len
     else:
-        return 1 #TODO check this point and fix it!
+        return 1
+
+def calculate_sim_of_individual(individual):
+    sim = 0.0
+    if len(individual) > 1:
+        for i in individual:
+            sim +=  calculate_cohesion(i)
+        return sim
+    else:
+        return 1
 
 def fill_sentences_list(all_sentences,sentence):
     all_sentences.append(sentence)
@@ -133,6 +142,15 @@ def calculate_dissimilarity(segment_list):
     else:
         return 0 #TODO check this point and fix it!
 
+#calculating hardness value part is missing!
+#think about to implement this function in a class(other file)
+def select_nondominated(ind_list):
+    non_dominated = []
+    for x, y in [(x,y) for x in ind_list for y in ind_list]:
+        if calculate_sim_of_individual(x) >= calculate_sim_of_individual(y) and  calculate_dissimilarity(x) <= calculate_dissimilarity(y):
+            non_dominated.append(x)
+    return non_dominated
+
 
 if __name__ == '__main__':
     print "Running Test..."
@@ -143,15 +161,29 @@ if __name__ == '__main__':
     #there is a gap where converting sentences list to individual binary vector
     #it will be appended later
     print 'Test sentences are: %s' % test_sentences
+    ind_list = []
     ind = [0,0,1]
     print 'Individual vector is: %s' % ind
     segment_list = []
     segment_list = get_segments_from_individual(ind,test_sentences)
+    ind_list.append(segment_list)
+    ind2 = [1,0,0]
+    print 'Individual vector-2 is: %s' % ind2
+    segment_list2 = []
+    segment_list2 = get_segments_from_individual(ind2,test_sentences)
+    ind_list.append(segment_list2)
+    ind3 = [0,1,0]
+    print 'Individual vector-3 is: %s' % ind3
+    segment_list3 = []
+    segment_list3 = get_segments_from_individual(ind3,test_sentences)
+    ind_list.append(segment_list3)
+
     print 'Segment list for individual vector: %s' % segment_list
+    print 'Similarity for individual vector: %s' % calculate_sim_of_individual(segment_list)
     for i in segment_list:
         print 'Internal cohesion of each segment is: %s' % calculate_cohesion(i)
     print 'Dissimilarity of adjacent segments is: %s' % calculate_dissimilarity(segment_list)
-
+    print 'Select non-dominated result is: %s' % select_nondominated(ind_list)
 
 
 
