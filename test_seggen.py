@@ -4,9 +4,13 @@ __author__ = 'sirin'
 from pygene.gene import rndPair, BitGene
 from pygene.organism import Organism, MendelOrganism
 from pygene.population import Population
+from test import utility
 
-test_list = [1,0,1,1,0,1,1]
-
+test_list = [1,0,1]
+test_sentences = []
+for i in open("/home/sirin/workspace/seggen/sample.txt"):
+    utility.fill_sentences_list(test_sentences,utility.make_pre_steps(i))
+ind_list = []
 class TestGene(BitGene):
 
     mutProb = 0.1
@@ -37,6 +41,16 @@ class TestOrganism(MendelOrganism):
             bits.append(n)
         return " ".join(map(str, bits))
 
+    def list_repr(self):
+        """
+        Return the gene values as a list
+        """
+        bits = []
+        for k in xrange(self.numgenes):
+            n = self[k]
+            bits.append(n)
+        return bits
+
     def fitness(self):
         """
         calculate fitness, as the absolute value of the
@@ -66,13 +80,23 @@ ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
-    while True:
+
+    while i < 1:
+        temp = []
+        for j in ph:
+            temp = utility.get_segments_from_individual(j.list_repr(),test_sentences)
+            ind_list.append(temp)
+        nes = []
+        t = [5,23,17,4,2,7,10]
+        nes = utility.non_dominated(t)
+        print nes
+        #a = utility.select_nondominated(ind_list)
         b = ph.best()
         print "generation %s: %s best=%s average=%s)" % (
         i, repr(b), b.fitness(), ph.fitness())
-        if b.fitness() == 0:
-            print "cracked!"
-            break
+        #if b.fitness() == 0:
+        #    print "cracked!"
+        #    break
         i += 1
         ph.gen()
 
