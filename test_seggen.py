@@ -11,6 +11,8 @@ test_sentences = []
 for i in open("/home/sirin/workspace/seggen/sample.txt"):
     utility.fill_sentences_list(test_sentences,utility.make_pre_steps(i))
 ind_list = []
+pareto_set = []
+
 class TestGene(BitGene):
 
     mutProb = 0.1
@@ -86,11 +88,8 @@ def main(nfittest=10, nkids=100):
         for j in ph:
             temp = utility.get_segments_from_individual(j.list_repr(),test_sentences)
             ind_list.append(temp)
-        nes = []
-        t = [5,23,17,4,2,7,10]
-        nes = utility.non_dominated(t)
-        print nes
-        #a = utility.select_nondominated(ind_list)
+        pareto_set = utility.non_dominated(ind_list)
+        print len(pareto_set)
         b = ph.best()
         print "generation %s: %s best=%s average=%s)" % (
         i, repr(b), b.fitness(), ph.fitness())

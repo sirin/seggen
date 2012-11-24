@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+__author__ = 'sirin'
+
 from nltk.tokenize import word_tokenize
 from nltk import PorterStemmer
 from numpy import zeros,dot
@@ -143,16 +146,31 @@ def calculate_dissimilarity(segment_list):
     else:
         return 0 #TODO check this point and fix it!
 
-#calculating hardness value part is missing!
-#think about to implement this function in a class(other file)
-def select_nondominated(ind_list):
-    return "hello"
+def compare_similarity(first, second):
+    return calculate_sim_of_individual(first) >= calculate_sim_of_individual(second)
 
-def non_dominated(mylist):
+def compare_dissimilarity(first, second):
+    return calculate_dissimilarity(first) <= calculate_dissimilarity(second)
+
+def non_dominated(ind_list):
     temp = []
-    for combo in combinations(mylist, 2):
+    result = []
+    for combo in combinations(ind_list, 2):
         temp.append(combo)
-    return temp
+    for x, y in temp:
+        if compare_similarity(x,y) and compare_dissimilarity(x,y):
+            result.append(x)
+    return remove_duplicate(result)
+
+def remove_duplicate(seq):
+    seq.sort()
+    last = seq[-1]
+    for i in range(len(seq)-2, -1, -1):
+        if last == seq[i]:
+            del seq[i]
+        else:
+            last = seq[i]
+    return seq
 
 if __name__ == '__main__':
     print "Running Test..."
