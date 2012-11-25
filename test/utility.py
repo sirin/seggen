@@ -150,7 +150,7 @@ def compare_similarity(first, second):
     return calculate_sim_of_individual(first) >= calculate_sim_of_individual(second)
 
 def compare_dissimilarity(first, second):
-    return calculate_dissimilarity(first) <= calculate_dissimilarity(second)
+    return calculate_dissimilarity(first) >= calculate_dissimilarity(second)
 
 def non_dominated(ind_list):
     temp = []
@@ -171,6 +171,9 @@ def remove_duplicate(seq):
         else:
             last = seq[i]
     return seq
+
+def dominates(x, y):
+    return compare_similarity(x,y) and compare_dissimilarity(x,y)
 
 if __name__ == '__main__':
     print "Running Test..."

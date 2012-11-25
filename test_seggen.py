@@ -5,6 +5,7 @@ from pygene.gene import rndPair, BitGene
 from pygene.organism import Organism, MendelOrganism
 from pygene.population import Population
 from test import utility
+from collections import defaultdict
 
 test_list = [1,0,1]
 test_sentences = []
@@ -83,12 +84,32 @@ ph = TestOrganismPopulation()
 def main(nfittest=10, nkids=100):
     i = 0
 
-    while i < 1:
+    while i < 3:
         temp = []
         for j in ph:
             temp = utility.get_segments_from_individual(j.list_repr(),test_sentences)
             ind_list.append(temp)
+        pop_size = len(ind_list)
         pareto_set = utility.non_dominated(ind_list)
+        pareto_fitness_list = []
+        pop_fitness_list = []
+
+        for pind in pareto_set:
+            count = 0
+            for ind in ind_list:
+                if utility.dominates(pind, ind):
+                    count += 1
+            pareto_fitness_list.append(count / pop_size+1)
+        print pareto_fitness_list
+
+        for ind in ind_list:
+            sum = 1.0
+            for pind,fit in zip(pareto_set,pareto_fitness_list):
+                if utility.dominates(pind, ind):
+                    sum += fit
+            pop_fitness_list.append(sum)
+        print pop_fitness_list
+
         print len(pareto_set)
         b = ph.best()
         print "generation %s: %s best=%s average=%s)" % (
