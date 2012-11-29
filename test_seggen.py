@@ -12,7 +12,10 @@ test_sentences = []
 for i in open("/home/sirin/workspace/seggen/sample.txt"):
     utility.fill_sentences_list(test_sentences,utility.make_pre_steps(i))
 ind_list = []
+ind_sentence_list = []
 pareto_set = []
+pareto_strength_dict = {}
+population_strength_dict = {}
 
 class TestGene(BitGene):
 
@@ -84,39 +87,39 @@ ph = TestOrganismPopulation()
 def main(nfittest=10, nkids=100):
     i = 0
 
-    while i < 3:
+    while True:
         temp = []
         for j in ph:
             temp = utility.get_segments_from_individual(j.list_repr(),test_sentences)
-            ind_list.append(temp)
-        pop_size = len(ind_list)
-        pareto_set = utility.non_dominated(ind_list)
+            ind_sentence_list.append(temp)
+
+        pop_size = len(ind_sentence_list)
+        pareto_set = utility.non_dominated(ind_sentence_list)
         pareto_fitness_list = []
-        pop_fitness_list = []
 
         for pind in pareto_set:
             count = 0
-            for ind in ind_list:
+            for ind in ind_sentence_list:
                 if utility.dominates(pind, ind):
                     count += 1
-            pareto_fitness_list.append(count / pop_size+1)
-        print pareto_fitness_list
+            pareto = count / pop_size+1
+            pareto_fitness_list.append(pareto)
+            pareto_strength_dict[pareto] = pind
 
-        for ind in ind_list:
+        for ind in ind_sentence_list:
             sum = 1.0
             for pind,fit in zip(pareto_set,pareto_fitness_list):
                 if utility.dominates(pind, ind):
                     sum += fit
-            pop_fitness_list.append(sum)
-        print pop_fitness_list
+            population_strength_dict[sum] = ind
 
-        print len(pareto_set)
         b = ph.best()
         print "generation %s: %s best=%s average=%s)" % (
         i, repr(b), b.fitness(), ph.fitness())
-        #if b.fitness() == 0:
-        #    print "cracked!"
-        #    break
+        if b.fitness() == 0:
+            print "cracked!"
+            break
+        del ind_list[:]
         i += 1
         ph.gen()
 
