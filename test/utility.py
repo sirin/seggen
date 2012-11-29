@@ -184,29 +184,5 @@ if __name__ == '__main__':
     #there is a gap where converting sentences list to individual binary vector
     #it will be appended later
     print 'Test sentences are: %s' % test_sentences
-    ind_list = []
-    ind = [0,0,1]
-    print 'Individual vector is: %s' % ind
-    segment_list = []
-    segment_list = get_segments_from_individual(ind,test_sentences)
-    ind_list.append(segment_list)
-    ind2 = [1,0,0]
-    print 'Individual vector-2 is: %s' % ind2
-    segment_list2 = []
-    segment_list2 = get_segments_from_individual(ind2,test_sentences)
-    ind_list.append(segment_list2)
-    ind3 = [0,1,0]
-    print 'Individual vector-3 is: %s' % ind3
-    segment_list3 = []
-    segment_list3 = get_segments_from_individual(ind3,test_sentences)
-    ind_list.append(segment_list3)
-
-    print 'Segment list for individual vector: %s' % segment_list
-    print 'Similarity for individual vector: %s' % calculate_sim_of_individual(segment_list)
-    for i in segment_list:
-        print 'Internal cohesion of each segment is: %s' % calculate_cohesion(i)
-    print 'Dissimilarity of adjacent segments is: %s' % calculate_dissimilarity(segment_list)
-    print 'Select non-dominated result is: %s' % select_nondominated(ind_list)
-
 
 
