@@ -4,18 +4,10 @@ __author__ = 'sirin'
 from pygene.gene import rndPair, BitGene
 from pygene.organism import Organism, MendelOrganism
 from pygene.population import Population
-from test import utility
-from collections import defaultdict
+from test.utility import Utility
 
 test_list = [1,0,1]
-test_sentences = []
-for i in open("/home/sirin/workspace/seggen/sample.txt"):
-    utility.fill_sentences_list(test_sentences,utility.make_pre_steps(i))
-ind_list = []
-ind_sentence_list = []
 pareto_set = []
-pareto_strength_dict = {}
-population_strength_dict = {}
 
 class TestGene(BitGene):
 
@@ -39,7 +31,7 @@ class TestOrganism(MendelOrganism):
 
     def __repr__(self):
         """
-        Return the gene values as a list
+        Return the gene values as a string
         """
         bits = []
         for k in xrange(self.numgenes):
@@ -86,32 +78,34 @@ ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
-
+    utility = Utility()
     while True:
         temp = []
+        individuals = []
         for j in ph:
-            temp = utility.get_segments_from_individual(j.list_repr(),test_sentences)
-            ind_sentence_list.append(temp)
+            individuals.append(j.list_repr())
 
-        pop_size = len(ind_sentence_list)
-        pareto_set = utility.non_dominated(ind_sentence_list)
+        pop_size = len(individuals)
+        pareto_set = utility.non_dominated(individuals)
         pareto_fitness_list = []
+        population_strength_list = []
 
         for pind in pareto_set:
             count = 0
-            for ind in ind_sentence_list:
+            for ind in individuals:
                 if utility.dominates(pind, ind):
                     count += 1
             pareto = count / pop_size+1
             pareto_fitness_list.append(pareto)
-            pareto_strength_dict[pareto] = pind
+        print pareto_fitness_list
 
-        for ind in ind_sentence_list:
+        for ind in individuals:
             sum = 1.0
             for pind,fit in zip(pareto_set,pareto_fitness_list):
                 if utility.dominates(pind, ind):
                     sum += fit
-            population_strength_dict[sum] = ind
+            population_strength_list.append(sum)
+        print population_strength_list
 
         b = ph.best()
         print "generation %s: %s best=%s average=%s)" % (
@@ -119,10 +113,11 @@ def main(nfittest=10, nkids=100):
         if b.fitness() == 0:
             print "cracked!"
             break
-        del ind_list[:]
+        del individuals[:]
         i += 1
         ph.gen()
-
+#gercek cumleler geri planda hesaplamada kullanilsin sadece,
+#ben populasyon ve fitness gibi kisimlarda 000:43, 011:32 gibi elemanlarla ugrasayim
 
 if __name__ == '__main__':
     main()
