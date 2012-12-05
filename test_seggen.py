@@ -88,7 +88,12 @@ def main(nfittest=10, nkids=100):
         pop_size = len(individuals)
         pareto_set = utility.non_dominated(individuals)
         pareto_fitness_list = []
+        pareto_fitness_dict = {}
         population_strength_list = []
+        population_strength_dict = {}
+
+        print "population: %s" % ph
+        print "pareto set: %s" % pareto_set
 
         for pind in pareto_set:
             count = 0
@@ -97,18 +102,24 @@ def main(nfittest=10, nkids=100):
                     count += 1
             pareto = count / pop_size+1
             pareto_fitness_list.append(pareto)
-        print pareto_fitness_list
+            pareto_fitness_dict[pareto] = pind
+
+        #print "pareto fitness list: %s" % pareto_fitness_list
+        print "pareto fitness dict: %s" % pareto_fitness_dict
 
         for ind in individuals:
-            sum = 1.0
+            sum_fit = 1.0
             for pind,fit in zip(pareto_set,pareto_fitness_list):
                 if utility.dominates(pind, ind):
-                    sum += fit
-            population_strength_list.append(sum)
-        print population_strength_list
+                    sum_fit += fit
+            population_strength_list.append(sum_fit)
+            population_strength_dict[sum_fit] = ind
+
+        #print "population fitness list: %s" % population_strength_list
+        print "population fitness dict: %s" % population_strength_dict
 
         b = ph.best()
-        print "generation %s: %s best=%s average=%s)" % (
+        print "Generation %s: %s Best=%s Average=%s)" % (
         i, repr(b), b.fitness(), ph.fitness())
         if b.fitness() == 0:
             print "cracked!"
@@ -116,8 +127,6 @@ def main(nfittest=10, nkids=100):
         del individuals[:]
         i += 1
         ph.gen()
-#gercek cumleler geri planda hesaplamada kullanilsin sadece,
-#ben populasyon ve fitness gibi kisimlarda 000:43, 011:32 gibi elemanlarla ugrasayim
 
 if __name__ == '__main__':
     main()

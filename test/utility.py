@@ -79,21 +79,21 @@ class Utility:
         all_words[word] += 1
 
     def doc_vec(self, doc, key_idx):
-        v=zeros(len(key_idx))
+        v = zeros(len(key_idx))
         for word in doc:
-            keydata=key_idx.get(word, None)
+            keydata = key_idx.get(word, None)
             if keydata:
                 v[keydata[0]] = 1
         return v
 
     def compare(self, doc1, doc2):
-        all_words=dict()
+        all_words = dict()
         for w in doc1:
             self.add_word(all_words,w)
         for w in doc2:
             self.add_word(all_words,w)
-        key_idx=dict() # key-> ( position, count )
-        keys=all_words.keys()
+        key_idx = dict() # key-> ( position, count )
+        keys = all_words.keys()
         keys.sort()
         for i in range(len(keys)):
             key_idx[keys[i]] = (i,all_words[keys[i]])
@@ -105,13 +105,13 @@ class Utility:
         return float(dot(v1,v2) / (norm(v1) * norm(v2)))
 
     def calculate_cohesion(self, seg):
-        sumseg = 0.0
+        sum_seg = 0.0
         couple_len = 0
         if len(seg) > 1:
             for prv, nxt in zip(seg, seg[1:]):
-                sumseg +=  self.compare(prv,nxt)
+                sum_seg +=  self.compare(prv,nxt)
                 couple_len += 1
-            return sumseg / couple_len
+            return sum_seg / couple_len
         else:
             return 1
 
@@ -141,10 +141,10 @@ class Utility:
 
     def calculate_simseg(self, segment1, segment2):
         divisor = len(segment1) * len(segment2)
-        sumsim = 0.0
+        sum_sim = 0.0
         for x, y in [(x,y) for x in segment1 for y in segment2]:
-            sumsim += self.compare(x,y)
-        return sumsim / divisor
+            sum_sim += self.compare(x,y)
+        return sum_sim / divisor
 
     def calculate_dissimilarity(self, segment_list):
         dissimilarity = 0.0
