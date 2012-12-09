@@ -87,8 +87,8 @@ def main(nfittest=10, nkids=100):
 
         pop_size = len(individuals)
         pareto_set = utility.non_dominated(individuals)
-        pareto_fitness_list = []
-        pareto_fitness_dict = {}
+        pareto_hardness_list = []
+        pareto_hardness_dict = {}
         population_strength_list = []
         population_strength_dict = {}
 
@@ -101,19 +101,19 @@ def main(nfittest=10, nkids=100):
                 if utility.dominates(pind, ind):
                     count += 1
             pareto = count / pop_size+1
-            pareto_fitness_list.append(pareto)
-            pareto_fitness_dict[pareto] = pind
+            pareto_hardness_list.append(pareto)
+            pareto_hardness_dict[pareto] = pind
 
-        #print "pareto fitness list: %s" % pareto_fitness_list
-        print "pareto fitness dict: %s" % pareto_fitness_dict
+        #print "pareto hardness list: %s" % pareto_hardness_list
+        print "pareto hardness dict: %s" % pareto_hardness_dict
 
         for ind in individuals:
             sum_fit = 1.0
-            for pind,fit in zip(pareto_set,pareto_fitness_list):
+            for pind,fit in zip(pareto_set,pareto_hardness_list):
                 if utility.dominates(pind, ind):
                     sum_fit += fit
-            population_strength_list.append(sum_fit)
-            population_strength_dict[sum_fit] = ind
+            population_strength_list.append(1.0/sum_fit)
+            population_strength_dict[1.0/sum_fit] = ind
 
         #print "population fitness list: %s" % population_strength_list
         print "population fitness dict: %s" % population_strength_dict
