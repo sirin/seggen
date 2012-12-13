@@ -82,15 +82,36 @@ class TestOrganismPopulation(Population):
     def override_best(self, list):
         list.sort()
         return list[0]
-    #select only one result
-    def roulette_wheel(self, fit_dict, pareto_set):
-        total_fix = sum(self.create_population_fitness_dict(pareto_set).keys())
-        pick = random.uniform(0, total_fix)
-        current = 0
-        for key, value in fit_dict.items():
-            current += key
-            if current > pick:
-                return value
+
+    def roulette_wheel_pop(self, pareto_set, num):
+        fitnesses = []
+        fitnesses = self.create_population_fitness_dict(pareto_set).keys()
+        total_fit = float(sum(fitnesses))
+        rel_fitness = [f/total_fit for f in fitnesses]
+        probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
+        new_population = []
+        for n in xrange(num):
+            r = random.random()
+            for (i, individual) in enumerate(self):
+                if r <= probs[i]:
+                    new_population.append(individual)
+                    break
+        return new_population
+
+    def roulette_wheel_pareto(self, pareto_set, formal_par, num):
+        fitnesses = []
+        fitnesses = self.create_pareto_fitness_dict(pareto_set).keys()
+        total_fit = float(sum(fitnesses))
+        rel_fitness = [f/total_fit for f in fitnesses]
+        probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
+        new_population = []
+        for n in xrange(num):
+            r = random.random()
+            for (i, individual) in enumerate(formal_par):
+                if r <= probs[i]:
+                    new_population.append(individual)
+                    break
+        return new_population
 
     def list_repr(self):
         temp = []
@@ -105,6 +126,14 @@ class TestOrganismPopulation(Population):
             temp.append(j.list_repr())
         pareto_set = self.utility.non_dominated(temp)
         return pareto_set
+
+    def pareto_formal(self, pareto_set):
+        formal = []
+        for i in pareto_set:
+            for j, k in zip(self.list_repr(), self):
+                if i == j:
+                    formal.append(k)
+        return formal
 
     def pareto_list_to_str(self, par_list):
         pareto_set_official =[]
@@ -141,21 +170,30 @@ ph = TestOrganismPopulation()
 def main(nfittest=10, nkids=100):
     i = 0
     while True:
-        t = []
-        t = ph.choose_pareto()
-        #print t
-        k = []
-        k = ph.pareto_list_to_str(t)
-        #print k
-        n = {}
-        n = ph.create_pareto_fitness_dict(t)
-        print n
-        #print n.keys()
-        z = {}
-        z = ph.create_population_fitness_dict(t)
-        print z
-        s = ph.roulette_wheel(z, t)
-        print s
+        pareto = []
+        pareto = ph.choose_pareto()
+
+        formal_pareto = []
+        formal_pareto = ph.pareto_formal(pareto)
+
+        pareto_fit_dict = {}
+        pareto_fit_dict = ph.create_pareto_fitness_dict(pareto)
+        print pareto_fit_dict
+
+        pop_fit_dict = {}
+        pop_fit_dict = ph.create_population_fitness_dict(pareto)
+        print pop_fit_dict
+
+        pop_size = random.randint(1,ph.__len__())
+        pareto_size = 10-pop_size
+
+        #to select two individuals from population
+        select_from_pop = ph.roulette_wheel_pop(pareto, pop_size)
+        print select_from_pop
+
+        select_from_pareto = ph.roulette_wheel_pareto(pareto, formal_pareto, pareto_size)
+        print select_from_pareto
+
         #print "Generation %s: %s Best=%s Average=%s)" % (
         #i, repr(b), b.fitness(), ph.fitness())
         b = ph.best()
