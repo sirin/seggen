@@ -6,6 +6,7 @@ from pygene.organism import Organism, MendelOrganism
 from pygene.population import Population
 from test.utility import Utility
 from random import choice
+import random
 
 test_list = [1,0,1]
 pareto_set = []
@@ -69,6 +70,7 @@ class TestOrganism(MendelOrganism):
 
 class TestOrganismPopulation(Population):
 
+    utility = Utility()
     initPopulation = 10
     species = TestOrganism
     # cull to this many children after each generation
@@ -77,70 +79,89 @@ class TestOrganismPopulation(Population):
     # number of children to create after each generation
     childCount = 40
 
-    def override_best(self,list):
+    def override_best(self, list):
         list.sort()
         return list[0]
+    #select only one result
+    def roulette_wheel(self, fit_dict, pareto_set):
+        total_fix = sum(self.create_population_fitness_dict(pareto_set).keys())
+        pick = random.uniform(0, total_fix)
+        current = 0
+        for key, value in fit_dict.items():
+            current += key
+            if current > pick:
+                return value
+
+    def list_repr(self):
+        temp = []
+        for j in self:
+            temp.append(j.list_repr())
+        return temp
+
+    def choose_pareto(self):
+        temp = []
+        pareto_set = []
+        for j in self:
+            temp.append(j.list_repr())
+        pareto_set = self.utility.non_dominated(temp)
+        return pareto_set
+
+    def pareto_list_to_str(self, par_list):
+        pareto_set_official =[]
+        for x in par_list:
+            pareto_set_official.append(' '.join(str(elem) for elem in x))
+        return pareto_set_official
+
+    def create_pareto_fitness_dict(self, pareto_set):
+        pareto_hardness_dict = {}
+        for pareto_ind in pareto_set:
+            count = 0.0
+            for ind in self.list_repr():
+                if self.utility.dominates(pareto_ind, ind):
+                    count += 1
+            pareto = count / (self.__len__()+1)
+            pareto_hardness_dict[pareto] = pareto_ind
+        return pareto_hardness_dict
+
+    def create_population_fitness_dict(self, pareto_set):
+        population_fitness_dict = {}
+        par_fit_list = self.create_pareto_fitness_dict(pareto_set).keys()
+        for ind, ind_real in zip(self.list_repr(), self):
+            sum_fit = 1.0
+            for pareto_ind, fit in zip(pareto_set, par_fit_list):
+                if self.utility.dominates(pareto_ind, ind):
+                    sum_fit += fit
+            population_fitness_dict[1.0/sum_fit] = ind_real
+        return population_fitness_dict
+
 
 # start with a population of 10 random organisms
 ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
-    utility = Utility()
     while True:
-        temp = []
-        individuals = []
-        for j in ph:
-            individuals.append(j.list_repr())
-
-        pop_size = len(individuals)
-        pareto_set = utility.non_dominated(individuals)
-        pareto_set_official =[]
-        for x in pareto_set:
-            pareto_set_official.append(' '.join(str(elem) for elem in x))
-        #print pareto_set_official[0]
-
-        pareto_hardness_list = []
-        pareto_hardness_dict = {}
-        population_strength_list = []
-        population_strength_dict = {}
-
-        #print "population: %s" % ph
-        #print "pareto set: %s" % pareto_set
-        print "selected from pareto set: %s" % choice(pareto_set_official)
-
-        for pind, preal in zip(pareto_set, pareto_set_official):
-            count = 0.0
-            for ind in individuals:
-                if utility.dominates(pind, ind):
-                    count += 1
-            pareto = count / (pop_size+1)
-            pareto_hardness_list.append(pareto)
-            pareto_hardness_dict[pareto] = preal
-
-        #print "pareto hardness list: %s" % pareto_hardness_list
-        #print "pareto hardness dict: %s" % pareto_hardness_dict
-
-        for ind, ireal in zip(individuals,ph):
-            sum_fit = 1.0
-            for pind, fit in zip(pareto_set,pareto_hardness_list):
-                if utility.dominates(pind, ind):
-                    sum_fit += fit
-            population_strength_list.append(1.0/sum_fit)
-            population_strength_dict[1.0/sum_fit] = ireal
-
-        #print "population fitness list: %s" % population_strength_list
-        #print "population fitness dict: %s" % population_strength_dict
-        t = choose_best(population_strength_dict)
-        print "selected from population: %s" % t[1]
-        b = ph.best()
-
+        t = []
+        t = ph.choose_pareto()
+        #print t
+        k = []
+        k = ph.pareto_list_to_str(t)
+        #print k
+        n = {}
+        n = ph.create_pareto_fitness_dict(t)
+        print n
+        #print n.keys()
+        z = {}
+        z = ph.create_population_fitness_dict(t)
+        print z
+        s = ph.roulette_wheel(z, t)
+        print s
         #print "Generation %s: %s Best=%s Average=%s)" % (
         #i, repr(b), b.fitness(), ph.fitness())
+        b = ph.best()
         if b.fitness() == 0:
             print "cracked!"
             break
-        del individuals[:]
         i += 1
         ph.gen()
 
