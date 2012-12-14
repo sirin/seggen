@@ -7,9 +7,9 @@ from pygene.population import Population
 from test.utility import Utility
 from random import choice
 import random
+import math
 
 test_list = [1,0,1]
-pareto_set = []
 
 #return a pair which has greatest key
 def choose_best(dict):
@@ -34,6 +34,9 @@ for i in range(len(test_list)):
 
 class TestOrganism(MendelOrganism):
     genome = genome
+
+    def __len__(self):
+        return len(self.genome)
 
     def __repr__(self):
         """
@@ -68,13 +71,21 @@ class TestOrganism(MendelOrganism):
             diffs += abs(x0 - x1)
         return diffs
 
+    #return two lists as offsprings
+    def crossover(self, other):
+        p = random.randint(1,self.__len__()-1)
+        offspring1 = self.list_repr()[:p] + other.list_repr()[p:]
+        offspring2 = other.list_repr()[:p] + self.list_repr()[p:]
+        return offspring1, offspring2
+
+
 class TestOrganismPopulation(Population):
 
     utility = Utility()
-    initPopulation = 10
+    initPopulation = 8
     species = TestOrganism
     # cull to this many children after each generation
-    childCull = 10
+    childCull = 8
 
     # number of children to create after each generation
     childCount = 40
@@ -178,24 +189,27 @@ def main(nfittest=10, nkids=100):
 
         pareto_fit_dict = {}
         pareto_fit_dict = ph.create_pareto_fitness_dict(pareto)
+        print "pareto"
         print pareto_fit_dict
 
         pop_fit_dict = {}
         pop_fit_dict = ph.create_population_fitness_dict(pareto)
+        print "pop"
         print pop_fit_dict
 
-        pop_size = random.randint(1,ph.__len__())
-        pareto_size = 10-pop_size
+        pareto_size = random.randint(1,len(pareto)-1)
+        pop_size = (ph.__len__()-pareto_size)
 
-        #to select two individuals from population
         select_from_pop = ph.roulette_wheel_pop(pareto, pop_size)
-        print select_from_pop
-
         select_from_pareto = ph.roulette_wheel_pareto(pareto, formal_pareto, pareto_size)
-        print select_from_pareto
+        mating_pool = select_from_pop+select_from_pareto
+        print "mating pool"
+        print mating_pool
 
-        #print "Generation %s: %s Best=%s Average=%s)" % (
-        #i, repr(b), b.fitness(), ph.fitness())
+        indexes = random.sample(set(range(len(mating_pool))), 2)
+        print mating_pool[indexes[0]].crossover(mating_pool[indexes[1]])
+
+
         b = ph.best()
         if b.fitness() == 0:
             print "cracked!"
