@@ -72,12 +72,29 @@ class TestOrganism(MendelOrganism):
         return diffs
 
     #return two lists as offsprings
+    #todo: should return organism, not list
+    #todo: if I can revert all organisms to list not str and so on
     def crossover(self, other):
         p = random.randint(1,self.__len__()-1)
         offspring1 = self.list_repr()[:p] + other.list_repr()[p:]
         offspring2 = other.list_repr()[:p] + self.list_repr()[p:]
         return offspring1, offspring2
 
+    #not enough understand this mutation
+    #todo : fix this function!
+    def mutation_pms(self, other, pms):
+        p = random.uniform
+        if pms <= p:
+            self = other
+        return self
+
+    #todo: ask that 'shifts a boundary of the individual to the next or the previous sentence.'
+    #how can I select that boundary?
+    def mutation_pmc(self, pmc):
+        p = random.uniform
+        if pmc <= p:
+            for gen in self.list_repr():
+                print gen
 
 class TestOrganismPopulation(Population):
 
@@ -207,8 +224,11 @@ def main(nfittest=10, nkids=100):
         print mating_pool
 
         indexes = random.sample(set(range(len(mating_pool))), 2)
-        print mating_pool[indexes[0]].crossover(mating_pool[indexes[1]])
-
+        children = mating_pool[indexes[0]].crossover(mating_pool[indexes[1]])
+        print children
+        mating_pool[indexes[0]] = mating_pool[indexes[0]].mutation_pms(mating_pool[3],0.4)
+        print mating_pool
+        print mating_pool[indexes[0]].mutation_pmc(0.4)
 
         b = ph.best()
         if b.fitness() == 0:
