@@ -32,7 +32,7 @@ for i in range(len(test_list)):
     genome[str(i)] = TestGene
 
 
-class TestOrganism(MendelOrganism):
+class TestOrganism(Organism):
     genome = genome
 
     def __len__(self):
@@ -44,9 +44,9 @@ class TestOrganism(MendelOrganism):
         """
         bits = []
         for k in xrange(self.numgenes):
-            n = self[k]
+            n = self.genes[str(k)].value
             bits.append(n)
-        return " ".join(map(str, bits))
+        return repr(bits)
 
     def list_repr(self):
         """
@@ -54,7 +54,7 @@ class TestOrganism(MendelOrganism):
         """
         bits = []
         for k in xrange(self.numgenes):
-            n = self[k]
+            n = self.genes[str(k)].value
             bits.append(n)
         return bits
 
@@ -65,10 +65,10 @@ class TestOrganism(MendelOrganism):
         corresponding bit of the target list
         """
         diffs = 0
-        for i in xrange(self.numgenes):
-            x0 = test_list[i]
-            x1 = self[i]
-            diffs += abs(x0 - x1)
+        #for i in xrange(self.numgenes):
+            #x0 = test_list[i]
+            #x1 = self[i]
+            #diffs += abs(x0 - x1)
         return diffs
 
     #return two lists as offsprings
@@ -191,25 +191,19 @@ class TestOrganismPopulation(Population):
             population_fitness_dict[1.0/sum_fit] = ind_real
         return population_fitness_dict
 
-
 # start with a population of 10 random organisms
 ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
     while True:
-        pareto = []
         pareto = ph.choose_pareto()
-
-        formal_pareto = []
         formal_pareto = ph.pareto_formal(pareto)
 
-        pareto_fit_dict = {}
         pareto_fit_dict = ph.create_pareto_fitness_dict(pareto)
         print "pareto"
         print pareto_fit_dict
 
-        pop_fit_dict = {}
         pop_fit_dict = ph.create_population_fitness_dict(pareto)
         print "pop"
         print pop_fit_dict
@@ -225,10 +219,16 @@ def main(nfittest=10, nkids=100):
 
         indexes = random.sample(set(range(len(mating_pool))), 2)
         children = mating_pool[indexes[0]].crossover(mating_pool[indexes[1]])
-        print children
-        mating_pool[indexes[0]] = mating_pool[indexes[0]].mutation_pms(mating_pool[3],0.4)
+        mating_pool = mating_pool+list(children)
+        print "after crossover"
         print mating_pool
-        print mating_pool[indexes[0]].mutation_pmc(0.4)
+        mating_pool[indexes[0]] = mating_pool[indexes[0]].mutation_pms(mating_pool[3],0.4)
+        print "after mutation pms"
+        print mating_pool
+        #print mating_pool[indexes[0]].mutation_pmc(0.4)
+
+
+
 
         b = ph.best()
         if b.fitness() == 0:
