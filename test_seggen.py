@@ -71,20 +71,15 @@ class TestOrganism(Organism):
             #diffs += abs(x0 - x1)
         return diffs
 
-    #return two lists as offsprings
-    #todo: should return organism, not list
-    #todo: if I can revert all organisms to list not str and so on
     def crossover(self, other):
-        p = random.randint(1,self.__len__()-1)
+        p = random.randint(0,self.__len__()-1)
         offspring1 = self.list_repr()[:p] + other.list_repr()[p:]
         offspring2 = other.list_repr()[:p] + self.list_repr()[p:]
         return offspring1, offspring2
 
-    #not enough understand this mutation
-    #todo : fix this function!
     def mutation_pms(self, other, pms):
-        p = random.uniform
-        if pms <= p:
+        p = random.uniform(0,1)
+        if p <= pms:
             self = other
         return self
 
@@ -99,10 +94,10 @@ class TestOrganism(Organism):
 class TestOrganismPopulation(Population):
 
     utility = Utility()
-    initPopulation = 8
+    initPopulation = 5
     species = TestOrganism
     # cull to this many children after each generation
-    childCull = 8
+    childCull = 5
 
     # number of children to create after each generation
     childCount = 40
@@ -191,6 +186,7 @@ class TestOrganismPopulation(Population):
             population_fitness_dict[1.0/sum_fit] = ind_real
         return population_fitness_dict
 
+
 # start with a population of 10 random organisms
 ph = TestOrganismPopulation()
 
@@ -218,16 +214,20 @@ def main(nfittest=10, nkids=100):
         print mating_pool
 
         indexes = random.sample(set(range(len(mating_pool))), 2)
+        parents = mating_pool[indexes[0]].list_repr()+mating_pool[indexes[1]].list_repr()
+        print "parents"
+        print parents
         children = mating_pool[indexes[0]].crossover(mating_pool[indexes[1]])
+        print "children"
+        print children
         mating_pool = mating_pool+list(children)
         print "after crossover"
         print mating_pool
-        mating_pool[indexes[0]] = mating_pool[indexes[0]].mutation_pms(mating_pool[3],0.4)
+        r = random.randint(0,len(mating_pool)-1)
+        mating_pool[indexes[0]] = mating_pool[indexes[0]].mutation_pms(mating_pool[r],0.4)
         print "after mutation pms"
         print mating_pool
         #print mating_pool[indexes[0]].mutation_pmc(0.4)
-
-
 
 
         b = ph.best()
