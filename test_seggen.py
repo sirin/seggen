@@ -34,6 +34,7 @@ for i in range(len(test_list)):
 
 class TestOrganism(Organism):
     genome = genome
+    Pmc = 0.8
 
     def __len__(self):
         return len(self.genome)
@@ -83,13 +84,14 @@ class TestOrganism(Organism):
             self = other
         return self
 
-    #todo: ask that 'shifts a boundary of the individual to the next or the previous sentence.'
-    #how can I select that boundary?
-    def mutation_pmc(self, pmc):
-        p = random.uniform
-        if pmc <= p:
-            for gen in self.list_repr():
-                print gen
+    #with a probability Pmc that shifts a boundary of the individual to the next sentence.
+    def mutation_pmc(self):
+        p = random.uniform(0,1)
+        r = random.randint(0,self.__len__()-2)
+        if p <= self.Pmc:
+            self.genes[str(r)].value, self.genes[str(r+1)].value = self.genes[str(r+1)].value, self.genes[str(r)].value
+            other = self
+        return other
 
 class TestOrganismPopulation(Population):
 
@@ -227,8 +229,13 @@ def main(nfittest=10, nkids=100):
         mating_pool[indexes[0]] = mating_pool[indexes[0]].mutation_pms(mating_pool[r],0.4)
         print "after mutation pms"
         print mating_pool
-        #print mating_pool[indexes[0]].mutation_pmc(0.4)
-
+        print mating_pool[indexes[0]]
+        mutated_pmc = mating_pool[indexes[0]].mutation_pmc()
+        print "after mutation pmc"
+        print mutated_pmc
+        mating_pool.append(mutated_pmc)
+        print "after mutation pmc"
+        print mating_pool
 
         b = ph.best()
         if b.fitness() == 0:
