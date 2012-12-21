@@ -16,13 +16,21 @@ def choose_best(dict):
     return sorted(dict.iteritems(),reverse=True)[0]
 
 class Flow:
+    children = []
 
-    def choose_pareto(self, population):
+    def get_children(self):
+        return self.children
+
+    def choose_pareto(self, population=None, my_list=None):
         temp = []
         pareto_set = []
-        for j in population:
-            temp.append(j.list_repr())
-        pareto_set = TestOrganismPopulation.utility.non_dominated(temp)
+
+        if population is not None:
+            for j in population:
+                temp.append(j.list_repr())
+            pareto_set = TestOrganismPopulation.utility.non_dominated(temp)
+        elif my_list is not None:
+            pareto_set = TestOrganismPopulation.utility.non_dominated(my_list)
         return pareto_set
 
     def create_pareto_fitness_dict(self, population, pareto_set, pareto_formal):
@@ -48,7 +56,6 @@ class Flow:
         return population_fitness_dict
 
     def roulette_wheel_pop(self, population, pareto_set, formal_pareto,num):
-        fitnesses = []
         fitnesses = self.create_population_fitness_dict(population, pareto_set, formal_pareto).values()
         total_fit = float(sum(fitnesses))
         rel_fitness = [f/total_fit for f in fitnesses]
@@ -63,7 +70,6 @@ class Flow:
         return new_population
 
     def roulette_wheel_pareto(self, population, pareto_set, formal_pareto, num):
-        fitnesses = []
         fitnesses = self.create_pareto_fitness_dict(population,pareto_set, formal_pareto).values()
         total_fit = float(sum(fitnesses))
         rel_fitness = [f/total_fit for f in fitnesses]
@@ -76,6 +82,26 @@ class Flow:
                     new_population.append(individual)
                     break
         return new_population
+
+    def crossover(self, organism1, organism2):
+        p = random.randint(0, organism1.len()-1)
+        offspring1 = organism1.list_repr()[:p] + organism2.list_repr()[p:]
+        offspring2 = organism2.list_repr()[:p] + organism1.list_repr()[p:]
+        return offspring1, offspring2
+
+    def mutation_pms(self, organism1, organism2, pms):
+        p = random.uniform(0,1)
+        if p <= pms:
+            organism1 = organism2
+        return organism1
+
+    #with a probability Pmc that shifts a boundary of the individual to the next sentence.
+    def mutation_pmc(self, organism):
+        p = random.uniform(0,1)
+        r = random.randint(0,len(organism)-2)
+        if p <= TestOrganism.Pmc:
+            organism[r], organism[r+1] = organism[r+1], organism[r]
+        return organism
 
 class TestGene(BitGene):
 
@@ -98,7 +124,7 @@ class TestOrganism(Organism):
     genome = genome
     Pmc = 0.8
 
-    def __len__(self):
+    def len(self):
         return len(self.genome)
 
     def __repr__(self):
@@ -134,25 +160,6 @@ class TestOrganism(Organism):
             #diffs += abs(x0 - x1)
         return diffs
 
-    def crossover(self, other):
-        p = random.randint(0,self.__len__()-1)
-        offspring1 = self.list_repr()[:p] + other.list_repr()[p:]
-        offspring2 = other.list_repr()[:p] + self.list_repr()[p:]
-        return offspring1, offspring2
-
-    def mutation_pms(self, other, pms):
-        p = random.uniform(0,1)
-        if p <= pms:
-            self = other
-        return self
-
-    #with a probability Pmc that shifts a boundary of the individual to the next sentence.
-    def mutation_pmc(self):
-        p = random.uniform(0,1)
-        r = random.randint(0,self.__len__()-2)
-        if p <= self.Pmc:
-            self.genes[str(r)].value, self.genes[str(r+1)].value = self.genes[str(r+1)].value, self.genes[str(r)].value
-        return self
 
 class TestOrganismPopulation(Population):
 
@@ -183,29 +190,21 @@ class TestOrganismPopulation(Population):
                     formal.append(k)
         return formal
 
-    def pareto_list_to_str(self, par_list):
-        pareto_set_official =[]
-        for x in par_list:
-            pareto_set_official.append(' '.join(str(elem) for elem in x))
-        return pareto_set_official
-
 # start with a population of 10 random organisms
 ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
     flow = Flow()
-    while i < 1:
-        pareto = flow.choose_pareto(ph)
+    while i < 2:
+        pareto = []
+        if i == 0:
+            pareto = flow.choose_pareto(population=ph)
+        elif i == 1:
+            pareto = flow.choose_pareto(my_list=flow.children)
         formal_pareto = ph.pareto_formal(pareto)
         pareto_fit_dict = flow.create_pareto_fitness_dict(ph, pareto, formal_pareto)
-        print "pareto"
-        print pareto_fit_dict
-
         pop_fit_dict = flow.create_population_fitness_dict(ph, pareto, formal_pareto)
-        print "pop"
-        print pop_fit_dict
-
         pareto_size = random.randint(1,len(pareto)-1)
         pop_size = (ph.__len__()-pareto_size)
 
@@ -215,32 +214,22 @@ def main(nfittest=10, nkids=100):
         print "mating pool"
         print mating_pool
 
-        children = []
-        for i in range(0,5):
+
+        for j in range(0,5):
             indexes = random.sample(set(range(len(mating_pool))), 2)
-            children += mating_pool[indexes[0]].crossover(mating_pool[indexes[1]])
-        print "children (after crossover)"
-        print children
+            flow.children += flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]])
 
-        r = random.randint(0,len(children)-1)
-        children[indexes[0]] = children[indexes[0]].mutation_pms(children[r],0.4)
-        print "after mutation pms"
-        print children
-        print children[indexes[0]]
-        mutated_pmc = children[indexes[0]].mutation_pmc()
-        print "after mutation pmc"
-        print mutated_pmc
-        children.append(mutated_pmc)
-        print "after mutation pmc"
-        print children
+        r = random.randint(0,len(flow.children)-1)
+        flow.children[indexes[0]] = flow.mutation_pms(flow.children[indexes[0]], flow.children[r], 0.4)
+        print "children"
+        print flow.get_children()
+        mutated_pmc = flow.mutation_pmc(flow.children[indexes[0]])
+        flow.children.append(mutated_pmc)
+        print "new population (children)"
+        print flow.get_children()
+        print len(flow.get_children())
 
-        #b = ph.best()
-        #if b.fitness() == 0:
-            #print "cracked!"
-            #break
         i += 1
-        #mating_pool.gen()
-        #ph.gen()
 
 if __name__ == '__main__':
     main()
