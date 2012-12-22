@@ -204,7 +204,7 @@ ph = TestOrganismPopulation()
 def main(nfittest=10, nkids=100):
     i = 0
     flow = Flow()
-    while i < 4:
+    while i < 10:
         if i == 0:
             for ind in ph:
                 flow.parents.append(ind.list_repr())
@@ -212,13 +212,14 @@ def main(nfittest=10, nkids=100):
         elif i > 0:
             new_pareto = flow.choose_pareto(flow.get_children())
             pareto = pareto+new_pareto
+            pareto = TestOrganismPopulation.utility.non_dominated(pareto)
             flow.clear_parents()
             for par in flow.get_children():
                 flow.parents.append(par)
             flow.clear_children()
 
-        pareto_size = random.randint(1,len(pareto)-1)
-        pop_size = (ph.__len__()-pareto_size)
+        pareto_size = random.randint(1,len(pareto))
+        pop_size = (len(flow.get_parents())-pareto_size)
 
         #ga operator: selection
         select_from_pop = flow.roulette_wheel_pop(flow.get_parents(), pareto, pop_size)
@@ -231,9 +232,9 @@ def main(nfittest=10, nkids=100):
             flow.children += flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]])
 
         #ga operator: mutation
-        r = random.randint(0,len(flow.children)-1)
-        flow.children[indexes[0]] = flow.mutation_pms(flow.children[indexes[0]], flow.children[r], 0.4)
-        mutated_pmc = flow.mutation_pmc(flow.children[indexes[0]])
+        rand_indexes = random.sample(set(range(len(flow.children))), 2)
+        flow.children[rand_indexes[0]] = flow.mutation_pms(flow.children[rand_indexes[0]], flow.children[rand_indexes[1]], 0.4)
+        mutated_pmc = flow.mutation_pmc(flow.children[rand_indexes[0]])
         flow.children.append(mutated_pmc)
         print "%d. step pareto archive" % (i+1)
         for p in pareto:
