@@ -16,47 +16,59 @@ def choose_best(dict):
     return sorted(dict.iteritems(),reverse=True)[0]
 
 class Flow:
+    parents = []
     children = []
 
     def get_children(self):
         return self.children
 
-    def choose_pareto(self, population=None, my_list=None):
+    def get_parents(self):
+        return self.parents
+
+    def clear_children(self):
+        del self.children[:]
+
+    def clear_parents(self):
+        del self.parents[:]
+
+    #return list
+    def choose_pareto(self, my_list):
         temp = []
         pareto_set = []
-
-        if population is not None:
-            for j in population:
-                temp.append(j.list_repr())
-            pareto_set = TestOrganismPopulation.utility.non_dominated(temp)
-        elif my_list is not None:
-            pareto_set = TestOrganismPopulation.utility.non_dominated(my_list)
+        pareto_set = TestOrganismPopulation.utility.non_dominated(my_list)
         return pareto_set
 
-    def create_pareto_fitness_dict(self, population, pareto_set, pareto_formal):
+    #return dict {str(list):float}
+    def create_pareto_fitness_dict(self, population, pareto_set):
         pareto_hardness_dict = {}
-        for pareto_ind, key in zip(pareto_set,pareto_formal):
+        for pareto_ind in pareto_set:
             count = 0.0
-            for ind in population.list_repr():
+            if type(population) != list:
+                population = population.list_repr()
+            for ind in population:
                 if TestOrganismPopulation.utility.dominates(pareto_ind, ind):
                     count += 1
             pareto = count / (len(population)+1)
-            pareto_hardness_dict[key] = pareto
+            pareto_hardness_dict[str(pareto_ind)] = pareto
         return pareto_hardness_dict
 
-    def create_population_fitness_dict(self, population, pareto_set, pareto_formal):
+    #return dict {str(list):float}
+    def create_population_fitness_dict(self, population, pareto_set):
         population_fitness_dict = {}
-        par_fit_list = self.create_pareto_fitness_dict(population, pareto_set, pareto_formal).values()
-        for ind, ind_real in zip(population.list_repr(), population):
+        par_fit_list = self.create_pareto_fitness_dict(population, pareto_set).values()
+        if type(population) != list:
+            population = population.list_repr()
+        for ind in population:
             sum_fit = 1.0
             for pareto_ind, fit in zip(pareto_set, par_fit_list):
                 if TestOrganismPopulation.utility.dominates(pareto_ind, ind):
                     sum_fit += fit
-            population_fitness_dict[ind_real] = 1.0/sum_fit
+            population_fitness_dict[str(ind)] = 1.0/sum_fit
         return population_fitness_dict
 
-    def roulette_wheel_pop(self, population, pareto_set, formal_pareto,num):
-        fitnesses = self.create_population_fitness_dict(population, pareto_set, formal_pareto).values()
+    #return list
+    def roulette_wheel_pop(self, population, pareto_set, num):
+        fitnesses = self.create_population_fitness_dict(population, pareto_set).values()
         total_fit = float(sum(fitnesses))
         rel_fitness = [f/total_fit for f in fitnesses]
         probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
@@ -69,26 +81,29 @@ class Flow:
                     break
         return new_population
 
-    def roulette_wheel_pareto(self, population, pareto_set, formal_pareto, num):
-        fitnesses = self.create_pareto_fitness_dict(population,pareto_set, formal_pareto).values()
+    #return list
+    def roulette_wheel_pareto(self, population, pareto_set, num):
+        fitnesses = self.create_pareto_fitness_dict(population,pareto_set).values()
         total_fit = float(sum(fitnesses))
         rel_fitness = [f/total_fit for f in fitnesses]
         probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
         new_population = []
         for n in xrange(num):
             r = random.random()
-            for (i, individual) in enumerate(formal_pareto):
+            for (i, individual) in enumerate(pareto_set):
                 if r <= probs[i]:
                     new_population.append(individual)
                     break
         return new_population
 
+    #return two lists
     def crossover(self, organism1, organism2):
-        p = random.randint(0, organism1.len()-1)
-        offspring1 = organism1.list_repr()[:p] + organism2.list_repr()[p:]
-        offspring2 = organism2.list_repr()[:p] + organism1.list_repr()[p:]
+        p = random.randint(0, len(organism1)-1)
+        offspring1 = organism1[:p] + organism2[p:]
+        offspring2 = organism2[:p] + organism1[p:]
         return offspring1, offspring2
 
+    #return list
     def mutation_pms(self, organism1, organism2, pms):
         p = random.uniform(0,1)
         if p <= pms:
@@ -96,6 +111,7 @@ class Flow:
         return organism1
 
     #with a probability Pmc that shifts a boundary of the individual to the next sentence.
+    #return list
     def mutation_pmc(self, organism):
         p = random.uniform(0,1)
         r = random.randint(0,len(organism)-2)
@@ -182,52 +198,46 @@ class TestOrganismPopulation(Population):
             temp.append(j.list_repr())
         return temp
 
-    def pareto_formal(self, pareto_set):
-        formal = []
-        for i in pareto_set:
-            for j, k in zip(self.list_repr(), self):
-                if i == j:
-                    formal.append(k)
-        return formal
-
 # start with a population of 10 random organisms
 ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
     flow = Flow()
-    while i < 2:
-        pareto = []
+    while i < 4:
         if i == 0:
-            pareto = flow.choose_pareto(population=ph)
-        elif i == 1:
-            pareto = flow.choose_pareto(my_list=flow.children)
-        formal_pareto = ph.pareto_formal(pareto)
-        pareto_fit_dict = flow.create_pareto_fitness_dict(ph, pareto, formal_pareto)
-        pop_fit_dict = flow.create_population_fitness_dict(ph, pareto, formal_pareto)
+            for ind in ph:
+                flow.parents.append(ind.list_repr())
+            pareto = flow.choose_pareto(flow.get_parents())
+        elif i > 0:
+            new_pareto = flow.choose_pareto(flow.get_children())
+            pareto = pareto+new_pareto
+            flow.clear_parents()
+            for par in flow.get_children():
+                flow.parents.append(par)
+            flow.clear_children()
+
         pareto_size = random.randint(1,len(pareto)-1)
         pop_size = (ph.__len__()-pareto_size)
 
-        select_from_pop = flow.roulette_wheel_pop(ph, pareto, formal_pareto, pop_size)
-        select_from_pareto = flow.roulette_wheel_pareto(ph, pareto, formal_pareto, pareto_size)
+        #ga operator: selection
+        select_from_pop = flow.roulette_wheel_pop(flow.get_parents(), pareto, pop_size)
+        select_from_pareto = flow.roulette_wheel_pareto(flow.get_parents(), pareto, pareto_size)
         mating_pool = select_from_pop+select_from_pareto
-        print "mating pool"
-        print mating_pool
 
-
+        #ga operator: crossover
         for j in range(0,5):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             flow.children += flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]])
 
+        #ga operator: mutation
         r = random.randint(0,len(flow.children)-1)
         flow.children[indexes[0]] = flow.mutation_pms(flow.children[indexes[0]], flow.children[r], 0.4)
-        print "children"
-        print flow.get_children()
         mutated_pmc = flow.mutation_pmc(flow.children[indexes[0]])
         flow.children.append(mutated_pmc)
-        print "new population (children)"
-        print flow.get_children()
-        print len(flow.get_children())
+        print "%d. step pareto archive" % (i+1)
+        for p in pareto:
+            print p
 
         i += 1
 
