@@ -1,13 +1,12 @@
 #! /usr/bin/env python
 __author__ = 'sirin'
 
-from pygene.gene import rndPair, BitGene
-from pygene.organism import Organism, MendelOrganism
+from pygene.gene import BitGene
+from pygene.organism import Organism
 from pygene.population import Population
 from test.utility import Utility
-from random import choice
 import random
-import math
+from cluster import *
 
 test_list = [1,0,1,0,0,0,0,1,0,0]
 
@@ -118,6 +117,12 @@ class Flow:
         if p <= TestOrganism.Pmc:
             organism[r], organism[r+1] = organism[r+1], organism[r]
         return organism
+
+    def aggregation(self, individual_list, alpha):
+        agg_dict = {}
+        for indiv in individual_list:
+            agg_dict[str(indiv)] = TestOrganismPopulation.utility.calculate_aggregation(indiv,alpha)
+        return agg_dict
 
 class TestGene(BitGene):
 
@@ -236,10 +241,10 @@ def main(nfittest=10, nkids=100):
         flow.children[rand_indexes[0]] = flow.mutation_pms(flow.children[rand_indexes[0]], flow.children[rand_indexes[1]], 0.4)
         mutated_pmc = flow.mutation_pmc(flow.children[rand_indexes[0]])
         flow.children.append(mutated_pmc)
+        agg_val = flow.aggregation(pareto, 5)
         print "%d. step pareto archive" % (i+1)
-        for p in pareto:
-            print p
-
+        for a in agg_val.items():
+            print a
         i += 1
 
 if __name__ == '__main__':

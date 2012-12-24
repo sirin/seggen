@@ -190,6 +190,9 @@ class Utility:
         y_sentence = self.get_segments_from_individual(y,self.test_sentences)
         return self.compare_similarity(x_sentence, y_sentence) and self.compare_dissimilarity(x_sentence, y_sentence)
 
+    def calculate_aggregation(self, individual, alpha):
+        sentence_repr = self.get_segments_from_individual(individual,self.test_sentences)
+        return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
 
 
 if __name__ == '__main__':
