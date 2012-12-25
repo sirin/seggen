@@ -78,6 +78,22 @@ class Utility:
         all_words.setdefault(word,0)
         all_words[word] += 1
 
+    def get_segments_from_individual(self, individual, sentences):
+        pre = Pre()
+        temp = []
+        segments = []
+        for i, j in zip(individual,range(len(sentences))):
+            temp.append(sentences[j])
+            if i == 1:
+                pre.fill_sentences_list(segments,temp)
+                temp = []
+        if len(sentences) == len(individual)+1:
+            temp.append(sentences[-1])
+            pre.fill_sentences_list(segments,temp)
+            temp = []
+        return segments
+
+    # used by compare method
     def doc_vec(self, doc, key_idx):
         v = zeros(len(key_idx))
         for word in doc:
@@ -86,6 +102,7 @@ class Utility:
                 v[keydata[0]] = 1
         return v
 
+    # used by calculate_cohesion method
     def compare(self, doc1, doc2):
         all_words = dict()
         for w in doc1:
@@ -104,6 +121,7 @@ class Utility:
         v2=self.doc_vec(doc2,key_idx)
         return float(dot(v1,v2) / (norm(v1) * norm(v2)))
 
+    # used by calculate_sim_of_individual
     def calculate_cohesion(self, seg):
         sum_seg = 0.0
         couple_len = 0
@@ -111,34 +129,21 @@ class Utility:
             for prv, nxt in zip(seg, seg[1:]):
                 sum_seg +=  self.compare(prv,nxt)
                 couple_len += 1
-            return sum_seg / couple_len
+            return sum_seg/couple_len
         else:
             return 1
 
+    # used by compare_similarity method
     def calculate_sim_of_individual(self, individual):
         sim = 0.0
         if len(individual) > 1:
             for i in individual:
                 sim +=  self.calculate_cohesion(i)
-            return sim
+            return sim/len(individual)
         else:
             return 1
 
-    def get_segments_from_individual(self, individual, sentences):
-        pre = Pre()
-        temp = []
-        segments = []
-        for i, j in zip(individual,range(len(sentences))):
-            temp.append(sentences[j])
-            if i == 1:
-                pre.fill_sentences_list(segments,temp)
-                temp = []
-        if len(sentences) == len(individual)+1:
-            temp.append(sentences[-1])
-            pre.fill_sentences_list(segments,temp)
-            temp = []
-        return segments
-
+    # used by calculate_dissimilarity
     def calculate_simseg(self, segment1, segment2):
         divisor = len(segment1) * len(segment2)
         sum_sim = 0.0
@@ -146,6 +151,7 @@ class Utility:
             sum_sim += self.compare(x,y)
         return sum_sim / divisor
 
+    # used by compare_dissimilarity
     def calculate_dissimilarity(self, segment_list):
         dissimilarity = 0.0
         compare_len = 0
@@ -157,9 +163,11 @@ class Utility:
         else:
             return 0 #TODO check this point and fix it!
 
+    # used by non_dominated and dominates methods
     def compare_similarity(self, first, second):
         return self.calculate_sim_of_individual(first) >= self.calculate_sim_of_individual(second)
 
+    # used by non_dominated and dominates methods
     def compare_dissimilarity(self, first, second):
         return self.calculate_dissimilarity(first) >= self.calculate_dissimilarity(second)
 
@@ -175,6 +183,7 @@ class Utility:
                 result.append(x)
         return self.remove_duplicate(result)
 
+    # used by non_dominated method
     def remove_duplicate(self, seq):
         seq.sort()
         last = seq[-1]
