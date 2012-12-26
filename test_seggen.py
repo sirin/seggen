@@ -8,8 +8,6 @@ from test.utility import Utility
 import random
 from cluster import *
 
-test_list = [1,0,1,0,0,0,0,1,0,0]
-
 #return a pair which has greatest key
 def choose_best(dict):
     return sorted(dict.iteritems(),reverse=True)[0]
@@ -137,7 +135,7 @@ class TestGene(BitGene):
 
 # generate a genome, one gene for each binary in the list
 genome = {}
-for i in range(len(test_list)):
+for i in range(39):
     genome[str(i)] = TestGene
 
 
@@ -185,7 +183,7 @@ class TestOrganism(Organism):
 class TestOrganismPopulation(Population):
 
     utility = Utility()
-    initPopulation = 10
+    initPopulation = 15
     species = TestOrganism
     # cull to this many children after each generation
     childCull = 10
@@ -209,6 +207,7 @@ ph = TestOrganismPopulation()
 def main(nfittest=10, nkids=100):
     i = 0
     flow = Flow()
+    count = 0
     while i < 10:
         if i == 0:
             for ind in ph:
@@ -242,10 +241,30 @@ def main(nfittest=10, nkids=100):
         mutated_pmc = flow.mutation_pmc(flow.children[rand_indexes[0]])
         flow.children.append(mutated_pmc)
         agg_val = flow.aggregation(pareto, 5)
-        print "%d. step pareto archive" % (i+1)
-        for a in agg_val.items():
-            print a
+
+        if i == 0:
+            copy_pareto = pareto
+            print "%d. step pareto archive" % (i+1)
+            for a in agg_val.items():
+                print a
+        else:
+            if copy_pareto != pareto:
+                copy_pareto = pareto
+                print "%d. step pareto archive" % (i+1)
+                for b in agg_val.items():
+                    print b
+            else:
+                count+=1
+                print "%d. step pareto archive" % (i+1)
+                for c in agg_val.items():
+                    print c
+            if count > 3:
+                print "result pareto archive"
+                for d in agg_val.items():
+                    print d
+                break
         i += 1
 
 if __name__ == '__main__':
+    print "Running Test..."
     main()

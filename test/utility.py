@@ -71,7 +71,7 @@ class Utility:
     test_sentences = []
     def __init__(self):
         pre = Pre()
-        for i in open("/Users/sirinsaygili/workspace/seggen/sample.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/sampleT1.txt"):
             pre.fill_sentences_list(self.test_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
