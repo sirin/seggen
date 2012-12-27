@@ -7,6 +7,9 @@ from pygene.population import Population
 from test.utility import Utility
 import random
 from cluster import *
+import numpy
+import scipy
+
 
 #return a pair which has greatest key
 def choose_best(dict):
@@ -217,6 +220,10 @@ def main(nfittest=10, nkids=100):
             new_pareto = flow.choose_pareto(flow.get_children())
             pareto = pareto+new_pareto
             pareto = TestOrganismPopulation.utility.non_dominated(pareto)
+            cl = HierarchicalClustering(pareto,lambda x,y: scipy.spatial.distance.euclidean(x,y))
+            cl.setLinkageMethod('average')
+            print cl.getlevel(4)
+            print len(cl.getlevel(4))
             flow.clear_parents()
             for par in flow.get_children():
                 flow.parents.append(par)
