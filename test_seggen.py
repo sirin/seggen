@@ -7,13 +7,7 @@ from pygene.population import Population
 from test.utility import Utility
 import random
 from cluster import *
-import numpy
 import scipy
-
-
-#return a pair which has greatest key
-def choose_best(dict):
-    return sorted(dict.iteritems(),reverse=True)[0]
 
 class Flow:
     parents = []
@@ -125,6 +119,20 @@ class Flow:
             agg_dict[str(indiv)] = TestOrganismPopulation.utility.calculate_aggregation(indiv,alpha)
         return agg_dict
 
+    def reducePareto(self, pareto):
+        reduced = []
+        cl = HierarchicalClustering(pareto,lambda x,y: scipy.spatial.distance.euclidean(x,y))
+        cl.setLinkageMethod('average')
+        for lev in cl.getlevel(4):
+            if len(lev)>1:
+                if len(lev) % 2 == 0:
+                    reduced.append(lev[len(lev)/2])
+                else:
+                    reduced.append(centroid(lev))
+            else:
+                reduced.append(lev)
+        return reduced
+
 class TestGene(BitGene):
 
     mutProb = 0.1
@@ -220,10 +228,10 @@ def main(nfittest=10, nkids=100):
             new_pareto = flow.choose_pareto(flow.get_children())
             pareto = pareto+new_pareto
             pareto = TestOrganismPopulation.utility.non_dominated(pareto)
-            cl = HierarchicalClustering(pareto,lambda x,y: scipy.spatial.distance.euclidean(x,y))
-            cl.setLinkageMethod('average')
-            print cl.getlevel(4)
-            print len(cl.getlevel(4))
+            if len(pareto) > TestOrganismPopulation.initPopulation:
+                reduced = flow.reducePareto(pareto)
+                del pareto[:]
+                pareto = reduced
             flow.clear_parents()
             for par in flow.get_children():
                 flow.parents.append(par)
