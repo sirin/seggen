@@ -8,6 +8,7 @@ from test.utility import Utility
 import random
 from cluster import *
 import scipy
+from datetime import datetime
 
 class Flow:
     parents = []
@@ -71,7 +72,7 @@ class Flow:
             r = random.random()
             for (i, individual) in enumerate(population):
                 if r <= probs[i]:
-                    new_population.append(individual)
+                    new_population.append(list(individual))
                     break
         return new_population
 
@@ -86,7 +87,7 @@ class Flow:
             r = random.random()
             for (i, individual) in enumerate(pareto_set):
                 if r <= probs[i]:
-                    new_population.append(individual)
+                    new_population.append(list(individual))
                     break
         return new_population
 
@@ -146,7 +147,7 @@ class TestGene(BitGene):
 
 # generate a genome, one gene for each binary in the list
 genome = {}
-for i in range(39):
+for i in range(13):
     genome[str(i)] = TestGene
 
 
@@ -194,7 +195,7 @@ class TestOrganism(Organism):
 class TestOrganismPopulation(Population):
 
     utility = Utility()
-    initPopulation = 15
+    initPopulation = 50
     species = TestOrganism
     # cull to this many children after each generation
     childCull = 10
@@ -212,19 +213,20 @@ class TestOrganismPopulation(Population):
             temp.append(j.list_repr())
         return temp
 
-# start with a population of 10 random organisms
+# start with a population of 100 random organisms
 ph = TestOrganismPopulation()
 
 def main(nfittest=10, nkids=100):
     i = 0
     flow = Flow()
     count = 0
-    while i < 10:
+    while i < 100:
         if i == 0:
             for ind in ph:
                 flow.parents.append(ind.list_repr())
             pareto = flow.choose_pareto(flow.get_parents())
         elif i > 0:
+            print "children %d" % len(flow.get_children())
             new_pareto = flow.choose_pareto(flow.get_children())
             pareto = pareto+new_pareto
             pareto = TestOrganismPopulation.utility.non_dominated(pareto)
@@ -240,13 +242,15 @@ def main(nfittest=10, nkids=100):
         pareto_size = random.randint(1,len(pareto))
         pop_size = (len(flow.get_parents())-pareto_size)
 
+
         #ga operator: selection
         select_from_pop = flow.roulette_wheel_pop(flow.get_parents(), pareto, pop_size)
         select_from_pareto = flow.roulette_wheel_pareto(flow.get_parents(), pareto, pareto_size)
         mating_pool = select_from_pop+select_from_pareto
 
+
         #ga operator: crossover
-        for j in range(0,5):
+        for j in range(0,50):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             flow.children += flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]])
 
@@ -256,30 +260,33 @@ def main(nfittest=10, nkids=100):
         mutated_pmc = flow.mutation_pmc(flow.children[rand_indexes[0]])
         flow.children.append(mutated_pmc)
         agg_val = flow.aggregation(pareto, 5)
-
+        '''
         if i == 0:
             copy_pareto = pareto
             print "%d. step pareto archive" % (i+1)
-            for a in agg_val.items():
-                print a
+            #for a in agg_val.items():
+                #print a
         else:
             if copy_pareto != pareto:
                 copy_pareto = pareto
                 print "%d. step pareto archive" % (i+1)
-                for b in agg_val.items():
-                    print b
+                #for b in agg_val.items():
+                    #print b
             else:
                 count+=1
                 print "%d. step pareto archive" % (i+1)
-                for c in agg_val.items():
-                    print c
-            if count > 3:
-                print "result pareto archive"
+                #for c in agg_val.items():
+                    #print c
+            if count >= 20:
+                print "result pareto archive at %d. step" %(i+1)
                 for d in agg_val.items():
                     print d
                 break
+        '''
         i += 1
 
 if __name__ == '__main__':
     print "Running Test..."
+    print datetime.now()
     main()
+    print datetime.now()
