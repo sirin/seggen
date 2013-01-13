@@ -96,7 +96,7 @@ class Flow:
         p = random.randint(0, len(organism1)-1)
         offspring1 = organism1[:p] + organism2[p:]
         offspring2 = organism2[:p] + organism1[p:]
-        return offspring1, offspring2
+        return [offspring1,offspring2]
 
     #return list
     def mutation_pms(self, organism1, organism2, pms):
@@ -135,13 +135,14 @@ class Flow:
         return reduced
 
     def reduceParetoWithSort(self, pareto):
-        result = []
         agg = self.aggregation(pareto, 5)
         values = [x for x in agg.values()]
         values.sort()
         mean = sum(values) / float(len(values))
         reduced = [el for el in values if el >= mean]
         temp = [key for key, value in agg.items() if value in reduced]
+        if len(temp) > 50:
+            temp = temp[-50:]
         return [eval(a) for a in temp]
 
 class TestGene(BitGene):
@@ -239,7 +240,7 @@ def main(nfittest=10, nkids=100):
             new_pareto = flow.choose_pareto(flow.get_children())
             pareto = pareto + new_pareto
             pareto = TestOrganismPopulation.utility.non_dominated(pareto)
-            if len(pareto) > flow.get_children():
+            if len(pareto) > len(flow.children):
                 reduced = flow.reduceParetoWithSort(pareto)
                 del pareto[:]
                 pareto = reduced
@@ -258,9 +259,9 @@ def main(nfittest=10, nkids=100):
 
 
         #ga operator: crossover
-        for j in range(0,50):
+        for j in range(0,30):
             indexes = random.sample(set(range(len(mating_pool))), 2)
-            flow.children += flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]])
+            flow.children.extend(flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
 
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(flow.children))), 2)
@@ -277,12 +278,13 @@ def main(nfittest=10, nkids=100):
         else:
             if copy_pareto != pareto:
                 copy_pareto = pareto
-                print "%d. step pareto archive" % (i+1)
+                count = 0
+                #print "%d. step pareto archive, count %d" % ((i+1),count)
                 #for b in agg_val.items():
                     #print b
             else:
                 count+=1
-                print "%d. step pareto archive" % (i+1)
+                #print "%d. step pareto archive, count %d" % ((i+1),count)
                 #for c in agg_val.items():
                     #print c
             if count >= 20:
@@ -291,7 +293,7 @@ def main(nfittest=10, nkids=100):
                     print d
                 break
 
-        print "len of pareto %d" % len(pareto)
+        print "pareto size %d" % len(pareto)
         i += 1
 
 if __name__ == '__main__':
