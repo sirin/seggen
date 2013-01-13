@@ -28,8 +28,6 @@ class Flow:
 
     #return list
     def choose_pareto(self, my_list):
-        temp = []
-        pareto_set = []
         pareto_set = TestOrganismPopulation.utility.non_dominated(my_list)
         return pareto_set
 
@@ -37,8 +35,10 @@ class Flow:
     def create_pareto_fitness_dict(self, population, pareto_set):
         pareto_hardness_dict = {}
         for pareto_ind in pareto_set:
+            if type(pareto_ind) != type(list()):
+                pareto_ind = list(pareto_ind)
             count = 0.0
-            if type(population) != list:
+            if type(population) != type(list()):
                 population = population.list_repr()
             for ind in population:
                 if TestOrganismPopulation.utility.dominates(pareto_ind, ind):
@@ -51,7 +51,7 @@ class Flow:
     def create_population_fitness_dict(self, population, pareto_set):
         population_fitness_dict = {}
         par_fit_list = self.create_pareto_fitness_dict(population, pareto_set).values()
-        if type(population) != list:
+        if type(population) != type(list()):
             population = population.list_repr()
         for ind in population:
             sum_fit = 1.0
@@ -120,7 +120,7 @@ class Flow:
             agg_dict[str(indiv)] = TestOrganismPopulation.utility.calculate_aggregation(indiv,alpha)
         return agg_dict
 
-    def reducePareto(self, pareto):
+    def reduceParetoWithClustering(self, pareto):
         reduced = []
         cl = HierarchicalClustering(pareto,lambda x,y: scipy.spatial.distance.euclidean(x,y))
         cl.setLinkageMethod('average')
@@ -133,6 +133,16 @@ class Flow:
             else:
                 reduced.append(lev)
         return reduced
+
+    def reduceParetoWithSort(self, pareto):
+        result = []
+        agg = self.aggregation(pareto, 5)
+        values = [x for x in agg.values()]
+        values.sort()
+        mean = sum(values) / float(len(values))
+        reduced = [el for el in values if el >= mean]
+        temp = [key for key, value in agg.items() if value in reduced]
+        return [eval(a) for a in temp]
 
 class TestGene(BitGene):
 
@@ -220,23 +230,21 @@ def main(nfittest=10, nkids=100):
     i = 0
     flow = Flow()
     count = 0
-    while i < 100:
+    while True:
         if i == 0:
             for ind in ph:
                 flow.parents.append(ind.list_repr())
             pareto = flow.choose_pareto(flow.get_parents())
         elif i > 0:
-            print "children %d" % len(flow.get_children())
             new_pareto = flow.choose_pareto(flow.get_children())
-            pareto = pareto+new_pareto
+            pareto = pareto + new_pareto
             pareto = TestOrganismPopulation.utility.non_dominated(pareto)
-            if len(pareto) > TestOrganismPopulation.initPopulation:
-                reduced = flow.reducePareto(pareto)
+            if len(pareto) > flow.get_children():
+                reduced = flow.reduceParetoWithSort(pareto)
                 del pareto[:]
                 pareto = reduced
             flow.clear_parents()
-            for par in flow.get_children():
-                flow.parents.append(par)
+            flow.parents = [par for par in flow.get_children()]
             flow.clear_children()
 
         pareto_size = random.randint(1,len(pareto))
@@ -260,7 +268,7 @@ def main(nfittest=10, nkids=100):
         mutated_pmc = flow.mutation_pmc(flow.children[rand_indexes[0]])
         flow.children.append(mutated_pmc)
         agg_val = flow.aggregation(pareto, 5)
-        '''
+
         if i == 0:
             copy_pareto = pareto
             print "%d. step pareto archive" % (i+1)
@@ -282,7 +290,8 @@ def main(nfittest=10, nkids=100):
                 for d in agg_val.items():
                     print d
                 break
-        '''
+
+        print "len of pareto %d" % len(pareto)
         i += 1
 
 if __name__ == '__main__':
