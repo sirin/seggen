@@ -206,7 +206,7 @@ class TestOrganism(Organism):
 class TestOrganismPopulation(Population):
 
     utility = Utility()
-    initPopulation = 50
+    initPopulation = 100
     species = TestOrganism
     # cull to this many children after each generation
     childCull = 10
@@ -259,9 +259,10 @@ def main(nfittest=10, nkids=100):
 
 
         #ga operator: crossover
-        for j in range(0,30):
+        for j in range(0,50):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             flow.children.extend(flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+
 
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(flow.children))), 2)
