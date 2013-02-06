@@ -26,11 +26,6 @@ class Flow:
     def clear_parents(self):
         del self.parents[:]
 
-    #return list
-    def choose_pareto(self, my_list):
-        pareto_set = TestOrganismPopulation.utility.non_dominated(my_list)
-        return pareto_set
-
     #return dict {str(list):float}
     def create_pareto_fitness_dict(self, population, pareto_set):
         pareto_hardness_dict = {}
@@ -235,9 +230,9 @@ def main(nfittest=10, nkids=100):
         if i == 0:
             for ind in ph:
                 flow.parents.append(ind.list_repr())
-            pareto = flow.choose_pareto(flow.get_parents())
+            pareto = TestOrganismPopulation.utility.non_dominated(flow.get_parents())
         elif i > 0:
-            new_pareto = flow.choose_pareto(flow.get_children())
+            new_pareto = TestOrganismPopulation.utility.non_dominated(flow.get_children())
             pareto = pareto + new_pareto
             pareto = TestOrganismPopulation.utility.non_dominated(pareto)
             if len(pareto) > len(flow.children):
@@ -299,6 +294,4 @@ def main(nfittest=10, nkids=100):
 
 if __name__ == '__main__':
     print "Running Test..."
-    print datetime.now()
     main()
-    print datetime.now()

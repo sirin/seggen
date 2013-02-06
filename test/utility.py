@@ -68,11 +68,11 @@ class Pre:
 
 class Utility:
 
-    test_sentences = []
+    refined_sentences = []
     def __init__(self):
         pre = Pre()
         for i in open("/Users/sirinsaygili/workspace/seggen/N1.txt"):
-            pre.fill_sentences_list(self.test_sentences,pre.make_pre_steps(i))
+            pre.fill_sentences_list(self.refined_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
         all_words.setdefault(word,0)
@@ -172,15 +172,12 @@ class Utility:
         return self.calculate_dissimilarity(first) >= self.calculate_dissimilarity(second)
 
     def non_dominated(self, ind_list):
-        temp = []
         result = []
         for combo in combinations(ind_list, 2):
-            temp.append(combo)
-        for x, y in temp:
-            x_sentence = self.get_segments_from_individual(x,self.test_sentences)
-            y_sentence = self.get_segments_from_individual(y,self.test_sentences)
+            x_sentence = self.get_segments_from_individual(combo[0],self.refined_sentences)
+            y_sentence = self.get_segments_from_individual(combo[1],self.refined_sentences)
             if self.compare_similarity(x_sentence,y_sentence) and self.compare_dissimilarity(x_sentence,y_sentence):
-                result.append(x)
+                result.append(combo[0])
         return self.remove_duplicate(result)
 
     # used by non_dominated method
@@ -195,17 +192,19 @@ class Utility:
         return seq
 
     def dominates(self, x, y):
-        x_sentence = self.get_segments_from_individual(x,self.test_sentences)
-        y_sentence = self.get_segments_from_individual(y,self.test_sentences)
+        x_sentence = self.get_segments_from_individual(x,self.refined_sentences)
+        y_sentence = self.get_segments_from_individual(y,self.refined_sentences)
         return self.compare_similarity(x_sentence, y_sentence) and self.compare_dissimilarity(x_sentence, y_sentence)
 
     def calculate_aggregation(self, individual, alpha):
-        sentence_repr = self.get_segments_from_individual(individual,self.test_sentences)
+        sentence_repr = self.get_segments_from_individual(individual,self.refined_sentences)
         return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
 
 
 if __name__ == '__main__':
     print "Running Test..."
-
+    util = Utility()
+    lists = [[0,0,0,0,0,0,0,1,0,0,1,0,0],[0,0,0,0,0,1,0,0,0,0,1,0,0],[0,0,0,1,0,0,0,0,0,0,0,1,1],[0,0,0,1,0,0,0,1,0,0,0,1,0]]
+    print util.non_dominated(lists)
 
 
