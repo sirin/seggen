@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 __author__ = 'sirin'
 
-from pygene.gene import BitGene
-from pygene.organism import Organism
-from pygene.population import Population
 from test.utility import Utility
 import random
 from cluster import *
@@ -13,6 +10,8 @@ from datetime import datetime
 class Flow:
     parents = []
     children = []
+    utility = Utility()
+    Pmc = 0.8
 
     def get_children(self):
         return self.children
@@ -36,7 +35,7 @@ class Flow:
             if type(population) != type(list()):
                 population = population.list_repr()
             for ind in population:
-                if TestOrganismPopulation.utility.dominates(pareto_ind, ind):
+                if self.utility.dominates(pareto_ind, ind):
                     count += 1
             pareto = count / (len(population)+1)
             pareto_hardness_dict[str(pareto_ind)] = pareto
@@ -51,7 +50,7 @@ class Flow:
         for ind in population:
             sum_fit = 1.0
             for pareto_ind, fit in zip(pareto_set, par_fit_list):
-                if TestOrganismPopulation.utility.dominates(pareto_ind, ind):
+                if self.utility.dominates(pareto_ind, ind):
                     sum_fit += fit
             population_fitness_dict[str(ind)] = 1.0/sum_fit
         return population_fitness_dict
@@ -105,14 +104,14 @@ class Flow:
     def mutation_pmc(self, organism):
         p = random.uniform(0,1)
         r = random.randint(0,len(organism)-2)
-        if p <= TestOrganism.Pmc:
+        if p <= self.Pmc:
             organism[r], organism[r+1] = organism[r+1], organism[r]
         return organism
 
     def aggregation(self, individual_list, alpha):
         agg_dict = {}
         for indiv in individual_list:
-            agg_dict[str(indiv)] = TestOrganismPopulation.utility.calculate_aggregation(indiv,alpha)
+            agg_dict[str(indiv)] = self.utility.calculate_aggregation(indiv,alpha)
         return agg_dict
 
     def reduceParetoWithClustering(self, pareto):
@@ -140,101 +139,43 @@ class Flow:
             temp = temp[-50:]
         return [eval(a) for a in temp]
 
-class TestGene(BitGene):
 
-    mutProb = 0.1
-    mutAmt = 10.0
+def create_gene():
+    if random.random() < 0.5:
+        return 1
+    else:
+        return 0
 
-    randMin = 0x0
-    randMax = 0xff
+def create_genome():
+    genome = []
+    for i in range(13):
+        genome.append(create_gene())
+    return genome
 
-    def __add__(self, other):
-        return (self.value + other.value) / 2
-
-# generate a genome, one gene for each binary in the list
-genome = {}
-for i in range(13):
-    genome[str(i)] = TestGene
-
-
-class TestOrganism(Organism):
-    genome = genome
-    Pmc = 0.8
-
-    def len(self):
-        return len(self.genome)
-
-    def __repr__(self):
-        """
-        Return the gene values as a string
-        """
-        bits = []
-        for k in xrange(self.numgenes):
-            n = self.genes[str(k)].value
-            bits.append(n)
-        return repr(bits)
-
-    def list_repr(self):
-        """
-        Return the gene values as a list
-        """
-        bits = []
-        for k in xrange(self.numgenes):
-            n = self.genes[str(k)].value
-            bits.append(n)
-        return bits
-
-    def fitness(self):
-        """
-        calculate fitness, as the absolute value of the
-        subtract of each bit gene from the
-        corresponding bit of the target list
-        """
-        diffs = 0
-        #for i in xrange(self.numgenes):
-            #x0 = test_list[i]
-            #x1 = self[i]
-            #diffs += abs(x0 - x1)
-        return diffs
-
-
-class TestOrganismPopulation(Population):
-
-    utility = Utility()
-    initPopulation = 100
-    species = TestOrganism
-    # cull to this many children after each generation
-    childCull = 10
-
-    # number of children to create after each generation
-    childCount = 40
-
-    def override_best(self, list):
-        list.sort()
-        return list[0]
-
-    def list_repr(self):
-        temp = []
-        for j in self:
-            temp.append(j.list_repr())
-        return temp
+def create_population(size):
+    population = []
+    for i in xrange(size):
+        population.append(create_genome())
+    return  population
 
 # start with a population of 100 random organisms
-ph = TestOrganismPopulation()
+ph = create_population(100)
 
-def main(nfittest=10, nkids=100):
+def main():
     i = 0
     flow = Flow()
     count = 0
     while True:
         if i == 0:
             for ind in ph:
-                flow.parents.append(ind.list_repr())
-            pareto = TestOrganismPopulation.utility.non_dominated(flow.get_parents())
+                flow.parents.append(ind)
+            print datetime.now()
+            pareto = flow.utility.non_dominated(flow.get_parents())
+            print datetime.now()
         elif i > 0:
-            new_pareto = TestOrganismPopulation.utility.non_dominated(flow.get_children())
+            new_pareto = flow.utility.non_dominated(flow.get_children())
             pareto = pareto + new_pareto
-            pareto = TestOrganismPopulation.utility.non_dominated(pareto)
+            pareto = flow.utility.non_dominated(pareto)
             if len(pareto) > len(flow.children):
                 reduced = flow.reduceParetoWithSort(pareto)
                 del pareto[:]
