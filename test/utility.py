@@ -6,6 +6,7 @@ from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm
 from itertools import combinations
+from datetime import datetime
 
 class Pre:
     def fill_sentences_list(self, all_sentences,sentence):
@@ -67,6 +68,9 @@ class Pre:
 
 
 class Utility:
+    starts = {}
+    ends = {}
+    running_times = {}
 
     refined_sentences = []
     def __init__(self):
@@ -200,11 +204,25 @@ class Utility:
         sentence_repr = self.get_segments_from_individual(individual,self.refined_sentences)
         return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
 
+    def mark_start(self, tag):
+        self.starts[tag] = datetime.now()
+
+    def mark_end(self, tag):
+        self.ends[tag] = datetime.now()
+        diff = self.ends[tag] - self.starts[tag]
+        if tag in self.running_times.keys():
+            self.running_times[tag] = self.running_times[tag] + int(str(diff.microseconds))
+        else:
+            self.running_times[tag] = int(str(diff.microseconds))
+        print "[%s] %s " % (tag, str(diff.microseconds))
+
+
 
 if __name__ == '__main__':
     print "Running Test..."
     util = Utility()
     lists = [[0,0,0,0,0,0,0,1,0,0,1,0,0],[0,0,0,0,0,1,0,0,0,0,1,0,0],[0,0,0,1,0,0,0,0,0,0,0,1,1],[0,0,0,1,0,0,0,1,0,0,0,1,0]]
     print util.non_dominated(lists)
+    print util.running_times
 
 
