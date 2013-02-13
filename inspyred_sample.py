@@ -1,18 +1,12 @@
-__author__ = 'sirinsaygili'
-
-
-from pyevolve import G1DList
-from pyevolve import Initializators
-from pyevolve import Mutators
-from pyevolve import Selectors, Statistics
-from pyevolve import Crossovers
-from pyevolve import GSimpleGA
+import random
+import time
+import inspyred
 from nltk.tokenize import word_tokenize
 from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm
 from itertools import combinations
-import deap
+from datetime import datetime
 
 refined_sentences = []
 def fill_sentences_list(all_sentences,sentence):
@@ -198,56 +192,51 @@ def dominates(x, y):
     y_sentence = get_segments_from_individual(y,refined_sentences)
     return compare_similarity(x_sentence, y_sentence) and compare_dissimilarity(x_sentence, y_sentence)
 
+def generate_binary(random, args):
+    bits = args.get('num_bits', 10)
+    return [random.choice([0, 1]) for i in range(bits)]
 
+def evaluate_fitness(candidates, args):
+    archive = args['_ec'].archive
+    #calculate the hardness/fitness of each archive solution.
+    for a in archive:
+        count = 0
+        for c in candidates:
+            individual = str(a).split(" : ")[0]
+            if dominates(individual, c):
+                count += 1
+        count = 3
+        hardness = float(count) / (len(candidates) + 1)
+        a.fitness = 1.0 / hardness
 
-# choose pareto
-def fitness1(chromosome):
-    score = 0.0
-    for value in chromosome:
-        if value==0:
-            score += 1.0
-    return score
+    #calculate the fitness of the population.
+    fitness = []
+    for c in candidates:
+        total_hardness = 0
+        for a in archive:
+            binary_part = str(a).split(" : ")[0]
+            if dominates(binary_part, c):
+                total_hardness += 1.0 / a.fitness
+        fitness.append(1.0 / (1 + total_hardness))
+    return fitness
 
-def fitness2(chromosome):
-    score = 0.0
-    for value in chromosome:
-        if value==0:
-            score += 2.0
-    return score
-
-def fitness(chromosome):
-    sc1 = fitness1(chromosome)
-    sc2 = fitness2(chromosome)
-    return sc1+sc2
-
-def run_main():
-    # Genome instance
-    genome = G1DList.G1DList(13)
-    genome.setParams(rangemin=0, rangemax=1)
-    genome.initializator.set(Initializators.G1DListInitializatorInteger)
-    genome.crossover.set(Crossovers.G1DListCrossoverSinglePoint)
-    genome.mutator.set(Mutators.G1DListMutatorIntegerBinary)
-
-    # The evaluator function (objective function)
-    genome.evaluator.set(fitness)
-
-    # Genetic Algorithm Instance
-    ga = GSimpleGA.GSimpleGA(genome)
-    ga.selector.set(Selectors.GRouletteWheel)
-    ga.setCrossoverRate(0.9)
-    ga.setPopulationSize(100)
-    ga.setMutationRate(0.03)
-    ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
-    ga.evolve(20)
-
-    # Best individual
-    best = ga.bestIndividual()
-    print "\nBest individual score: %.2f" % (best.score,)
-    print best
-
-    lists = [[1,1,0,0,0,0,0,1,0,0,1,0,0],[0,0,0,0,0,1,0,0,0,0,1,0,0],[0,0,0,1,0,0,0,0,0,0,0,1,1],[0,0,0,1,0,0,0,1,0,0,0,1,0]]
-    print dominates(lists[0],lists[1])
-
-if __name__ == "__main__":
-    refine_text()
-    run_main()
+rand = random.Random()
+rand.seed(int(time.time()))
+refine_text()
+ga = inspyred.ec.GA(rand)
+ga.observer = inspyred.ec.observers.stats_observer
+ga.archiver = inspyred.ec.archivers.best_archiver
+ga.selector = inspyred.ec.selectors.fitness_proportionate_selection
+ga.variator = [inspyred.ec.variators.n_point_crossover,
+               inspyred.ec.variators.bit_flip_mutation]
+ga.replacer = inspyred.ec.replacers.generational_replacement
+ga.terminator = inspyred.ec.terminators.diversity_termination
+final_pop = ga.evolve(evaluator=evaluate_fitness,
+    generator=generate_binary,
+    max_evaluations=10000,
+    num_elites=1,
+    pop_size=100,
+    num_bits=13)
+final_pop.sort(reverse=True)
+#for ind in final_pop:
+    #print(str(ind))
