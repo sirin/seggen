@@ -54,8 +54,8 @@ def create_population_fitness_dict(population, pareto_set, hardness, utility):
         sum_fit = 1.0
         for pareto_ind, fit in zip(pareto_set, hardness):
             if utility.dominates(pareto_ind, ind):
-                sum_fit += fit
-        population_fitness_dict[str(ind)] = 1.0/sum_fit
+                sum_fit += 1.0/fit
+        population_fitness_dict[str(ind)] = 1.0/(1.0 + sum_fit)
     return population_fitness_dict
 
 def get_probability_list():
@@ -148,8 +148,6 @@ def reduceParetoWithSort(pareto, utility):
         temp = temp[-50:]
     return [eval(a) for a in temp]
 
-
-
 def generation():
     utility = Utility()
     population = create_population(100)
@@ -157,7 +155,7 @@ def generation():
     children = []
     i = 0
     count = 0
-    while True:
+    while i < 5000:
         if i == 0:
             for ind in population:
                 parents.append(ind)
@@ -174,6 +172,7 @@ def generation():
             parents = [par for par in children]
             children = clear_children(children)
 
+
         #ga operator: selection (roulette wheel)
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
@@ -186,7 +185,7 @@ def generation():
         mating_pool.extend(selected_from_pareto)
 
         #ga operator: crossover
-        for j in range(0,50):
+        for j in range(0,30):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
 
@@ -197,28 +196,28 @@ def generation():
         children.append(mutated_pmc)
         agg_val = aggregation(pareto, utility)
 
-        if i == 0:
-            copy_pareto = pareto
-            print "%d. step pareto archive" % (i+1)
-            #for a in agg_val.items():
-            #print a
-        else:
-            if copy_pareto != pareto:
-                copy_pareto = pareto
-                count = 0
-                #print "%d. step pareto archive, count %d" % ((i+1),count)
-                #for b in agg_val.items():
-                #print b
-            else:
-                count+=1
-                #print "%d. step pareto archive, count %d" % ((i+1),count)
-                #for c in agg_val.items():
-                #print c
-            if count >= 20:
-                print "result pareto archive at %d. step" %(i+1)
-                for d in agg_val.items():
-                    print d
-                break
+#        if i == 0:
+#            copy_pareto = pareto
+#            print "%d. step pareto archive" % (i+1)
+#            #for a in agg_val.items():
+#            #print a
+#        else:
+#            if copy_pareto != pareto:
+#                copy_pareto = pareto
+#                count = 0
+#                #print "%d. step pareto archive, count %d" % ((i+1),count)
+#                #for b in agg_val.items():
+#                #print b
+#            else:
+#                count+=1
+#                #print "%d. step pareto archive, count %d" % ((i+1),count)
+#                #for c in agg_val.items():
+#                #print c
+#            if count >= 20:
+#                print "result pareto archive at %d. step" %(i+1)
+#                for d in agg_val.items():
+#                    print d
+#                break
 
         print "pareto size %d" % len(pareto)
         i += 1
