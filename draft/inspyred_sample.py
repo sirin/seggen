@@ -205,7 +205,6 @@ def evaluate_fitness(candidates, args):
             individual = str(a).split(" : ")[0]
             if dominates(individual, c):
                 count += 1
-        count = 3
         hardness = float(count) / (len(candidates) + 1)
         a.fitness = 1.0 / hardness
 
@@ -220,23 +219,30 @@ def evaluate_fitness(candidates, args):
         fitness.append(1.0 / (1 + total_hardness))
     return fitness
 
-rand = random.Random()
-rand.seed(int(time.time()))
-refine_text()
-ga = inspyred.ec.GA(rand)
-ga.observer = inspyred.ec.observers.stats_observer
-ga.archiver = inspyred.ec.archivers.best_archiver
-ga.selector = inspyred.ec.selectors.fitness_proportionate_selection
-ga.variator = [inspyred.ec.variators.n_point_crossover,
-               inspyred.ec.variators.bit_flip_mutation]
-ga.replacer = inspyred.ec.replacers.generational_replacement
-ga.terminator = inspyred.ec.terminators.diversity_termination
-final_pop = ga.evolve(evaluator=evaluate_fitness,
-    generator=generate_binary,
-    max_evaluations=10000,
-    num_elites=1,
-    pop_size=100,
-    num_bits=13)
-final_pop.sort(reverse=True)
-#for ind in final_pop:
-    #print(str(ind))
+def main(prng=None, display=False):
+    rand = random.Random()
+    rand.seed(int(time.time()))
+    refine_text()
+    ga = inspyred.ec.emo.ec.GA(rand)
+    ga.observer = inspyred.ec.emo.ec.observers.stats_observer
+    ga.archiver = inspyred.ec.emo.ec.archivers.best_archiver
+    ga.selector = inspyred.ec.emo.ec.selectors.fitness_proportionate_selection
+    ga.variator = [inspyred.ec.emo.ec.variators.n_point_crossover,
+                   inspyred.ec.emo.ec.variators.bit_flip_mutation]
+    ga.replacer = inspyred.ec.emo.ec.replacers.generational_replacement
+    ga.terminator = inspyred.ec.emo.ec.terminators.diversity_termination
+    final_pop = ga.evolve(evaluator=evaluate_fitness,
+        generator=generate_binary,
+        max_evaluations=10000,
+        num_elites=50,
+        pop_size=100,
+        num_bits=13)
+    if display:
+        final_arc = ga.archive
+        print('Best Solutions: \n')
+        for f in final_arc:
+            print(f)
+
+
+if __name__ == '__main__':
+    main(display=True)

@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 __author__ = 'sirin'
 
-from test.utility import Utility
+from src.utilities.utility import Utility
 import random
 from cluster import *
 import scipy
-from datetime import datetime
 
 class Flow:
     parents = []
@@ -17,6 +16,8 @@ class Flow:
     par_fit_list = []
     fitnesses = []
     probs = []
+    pareto_fitnesses = []
+    pareto_probs = []
 
     def get_children(self):
         return self.children
@@ -64,7 +65,7 @@ class Flow:
         return population_fitness_dict
 
     def get_probability_list(self, population, pareto_set):
-        self.fitnesses = self.create_population_fitness_dict(population, pareto_set).values()
+        self.fitnesses = self.create_population_fitness_dict(population, pareto_set,).values()
         total_fit = float(sum(self.fitnesses))
         rel_fitness = [f/total_fit for f in self.fitnesses]
         self.probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
@@ -81,20 +82,23 @@ class Flow:
                     break
         return new_population
 
-#    #return list
-#    def roulette_wheel_pareto(self, population, pareto_set, num):
-#        fitnesses = self.create_pareto_fitness_dict(population,pareto_set).values()
-#        total_fit = float(sum(fitnesses))
-#        rel_fitness = [f/total_fit for f in fitnesses]
-#        probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
-#        new_population = []
-#        for n in xrange(num):
-#            r = random.random()
-#            for (i, individual) in enumerate(pareto_set):
-#                if r <= probs[i]:
-#                    new_population.append(list(individual))
-#                    break
-#        return new_population
+    def get_pareto_prob_list(self, population, pareto_set):
+        self.pareto_fitnesses = self.create_pareto_fitness_dict(population,pareto_set).values()
+        total_fit = float(sum(self.pareto_fitnesses))
+        rel_fitness = [f/total_fit for f in self.pareto_fitnesses]
+        self.pareto_probs = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
+        return self.pareto_probs
+
+    #return list
+    def roulette_wheel_pareto(self, pareto_set, pareto_probs, num):
+        new_population = []
+        for n in xrange(num):
+            r = random.random()
+            for (i, individual) in enumerate(pareto_set):
+                if r <= pareto_probs[i]:
+                    new_population.append(list(individual))
+                    break
+        return new_population
 
     #return two lists
     def crossover(self, organism1, organism2):
@@ -182,9 +186,12 @@ def main():
                 flow.parents.append(ind)
             pareto = flow.utility.non_dominated(flow.get_parents())
         elif i > 0:
+            print "children size %d" % len(flow.get_children())
             new_pareto = flow.utility.non_dominated(flow.get_children())
             pareto = pareto + new_pareto
+            print "before selection %d" % len(pareto)
             pareto = flow.utility.non_dominated(pareto)
+            print "after selection %d" % len(pareto)
             if len(pareto) > len(flow.children):
                 reduced = flow.reduceParetoWithSort(pareto)
                 del pareto[:]
@@ -192,28 +199,26 @@ def main():
             flow.clear_parents()
             flow.parents = [par for par in flow.get_children()]
             flow.clear_children()
-
-        #pareto_size = random.randint(1,len(pareto))
-        #pop_size = (len(flow.get_parents())-pareto_size)
+            print "after reduce %d" % len(pareto)
+        pareto_size = random.randint(1,len(pareto))
+        pop_size = (len(flow.get_parents())-pareto_size)
 
 
         #ga operator: selection
-        print datetime.now()
-        print len(flow.get_parents())
-        select_from_pop = flow.roulette_wheel_pop(flow.get_parents(), pareto, len(flow.get_parents()))
-        print datetime.now()
-        print "nes"
+        prob = flow.get_probability_list(flow.get_parents(), pareto)
+        select_from_pop = flow.roulette_wheel_pop(flow.get_parents(), prob, pop_size)
 
-        #select_from_pareto = flow.roulette_wheel_pareto(flow.get_parents(), pareto, pareto_size)
+
+        select_from_pareto = flow.roulette_wheel_pareto(flow.get_parents(), pareto, pareto_size)
         #mating_pool = select_from_pop+select_from_pareto
         mating_pool = select_from_pop
-
+        print len(mating_pool)
 
         #ga operator: crossover
         for j in range(0,50):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             flow.children.extend(flow.crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
-
+        print "after crossover %d" % len(flow.get_children())
 
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(flow.children))), 2)

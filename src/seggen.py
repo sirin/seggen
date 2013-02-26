@@ -1,6 +1,6 @@
 __author__ = 'sirinsaygili'
 
-from test.utility import Utility
+from src.utilities.utility import Utility
 import random
 from cluster import *
 import scipy
@@ -155,7 +155,7 @@ def generation():
     children = []
     i = 0
     count = 0
-    while i < 5000:
+    while True:
         if i == 0:
             for ind in population:
                 parents.append(ind)
@@ -196,30 +196,30 @@ def generation():
         children.append(mutated_pmc)
         agg_val = aggregation(pareto, utility)
 
-#        if i == 0:
-#            copy_pareto = pareto
-#            print "%d. step pareto archive" % (i+1)
-#            #for a in agg_val.items():
-#            #print a
-#        else:
-#            if copy_pareto != pareto:
-#                copy_pareto = pareto
-#                count = 0
-#                #print "%d. step pareto archive, count %d" % ((i+1),count)
-#                #for b in agg_val.items():
-#                #print b
-#            else:
-#                count+=1
-#                #print "%d. step pareto archive, count %d" % ((i+1),count)
-#                #for c in agg_val.items():
-#                #print c
-#            if count >= 20:
-#                print "result pareto archive at %d. step" %(i+1)
-#                for d in agg_val.items():
-#                    print d
-#                break
+        if i == 0:
+            copy_pareto = pareto
+            print "%d. step pareto archive" % (i+1)
+            #for a in agg_val.items():
+            #print a
+        else:
+            if copy_pareto != pareto:
+                copy_pareto = pareto
+                count = 0
+                #print "%d. step pareto archive, count %d" % ((i+1),count)
+                #for b in agg_val.items():
+                #print b
+            else:
+                count+=1
+                #print "%d. step pareto archive, count %d" % ((i+1),count)
+                #for c in agg_val.items():
+                #print c
+            if count >= 20:
+                print "result pareto archive at %d. step" %(i+1)
+                for d in agg_val.items():
+                    print d
+                break
 
-        print "pareto size %d" % len(pareto)
+        print "pareto archive count %d" % len(pareto)
         i += 1
 
 if __name__ == '__main__':

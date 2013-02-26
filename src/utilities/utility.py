@@ -57,7 +57,7 @@ class Pre:
         }
         stopwords = []
         porter = PorterStemmer()
-        for i in open("/Users/sirinsaygili/workspace/seggen/stopwords.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/src/stopwords.txt"):
             stopwords.append(i.replace("\n",""))
         text = self.replace_all(text, replacement_chars)
         words = word_tokenize(text)
@@ -75,7 +75,7 @@ class Utility:
     refined_sentences = []
     def __init__(self):
         pre = Pre()
-        for i in open("/Users/sirinsaygili/workspace/seggen/N1.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/src/N1.txt"):
             pre.fill_sentences_list(self.refined_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
