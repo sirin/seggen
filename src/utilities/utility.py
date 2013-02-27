@@ -195,27 +195,38 @@ class Utility:
                 last = seq[i]
         return seq
 
+    '''
     def dominates(self, x, y):
         x_sentence = self.get_segments_from_individual(x,self.refined_sentences)
         y_sentence = self.get_segments_from_individual(y,self.refined_sentences)
         return self.compare_similarity(x_sentence, y_sentence) and self.compare_dissimilarity(x_sentence, y_sentence)
+    '''
 
     def calculate_aggregation(self, individual, alpha):
         sentence_repr = self.get_segments_from_individual(individual,self.refined_sentences)
         return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
 
-    def mark_start(self, tag):
-        self.starts[tag] = datetime.now()
+    def create_similarity_value_list_of_population(self, ind_list):
+        similarity = []
+        for ind in ind_list:
+            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
+            sim = self.calculate_sim_of_individual(ind_sentences)
+            similarity.append(sim)
+        return similarity
 
-    def mark_end(self, tag):
-        self.ends[tag] = datetime.now()
-        diff = self.ends[tag] - self.starts[tag]
-        if tag in self.running_times.keys():
-            self.running_times[tag] = self.running_times[tag] + int(str(diff.microseconds))
-        else:
-            self.running_times[tag] = int(str(diff.microseconds))
-        print "[%s] %s " % (tag, str(diff.microseconds))
+    def create_dissimilarity_value_list_of_population(self, ind_list):
+        dissimilarity = []
+        for ind in ind_list:
+            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
+            dissim = self.calculate_dissimilarity(ind_sentences)
+            dissimilarity.append(dissim)
+        return dissimilarity
 
+    def create_objective_value_list_of_population(self, ind_list):
+        similarity = self.create_similarity_value_list_of_population(ind_list)
+        dissimilarity = self.create_dissimilarity_value_list_of_population(ind_list)
+        objective_list = [[item1,item2] for item1,item2 in zip(similarity,dissimilarity)]
+        return objective_list
 
 
 if __name__ == '__main__':

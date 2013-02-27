@@ -40,22 +40,27 @@ def clear_parents(parents):
 
 #return dict {str(list):float}
 def create_pareto_fitness_dict(population, pareto_set, utility):
+    pareto_objective_list = utility.create_objective_value_list_of_population(pareto_set)
+    pop_objective_list = utility.create_objective_value_list_of_population(population)
     count = 0.0
-    for x, y in [(x,y) for x in pareto_set for y in population]:
-        if utility.dominates(x, y):
-            count += 1
-        pareto = count / (len(population)+1)
-        pareto_hardness_dict[str(x)] = pareto
+    for x,x_obj in zip(pareto_set,pareto_objective_list):
+        for y_obj in pop_objective_list:
+            if x_obj[0] >= y_obj[0] and x_obj[1] >= y_obj[1]:
+                count += 1.0
+        strength = float(count / (len(population)+1))
+        pareto_hardness_dict[str(x)] = strength
     return pareto_hardness_dict
 
 #return dict {str(list):float}
 def create_population_fitness_dict(population, pareto_set, hardness, utility):
-    for ind in population:
+    pareto_objective_list = utility.create_objective_value_list_of_population(pareto_set)
+    pop_objective_list = utility.create_objective_value_list_of_population(population)
+    for ind,pop_obj in zip(population,pop_objective_list):
         sum_fit = 1.0
-        for pareto_ind, fit in zip(pareto_set, hardness):
-            if utility.dominates(pareto_ind, ind):
+        for pareto_obj, fit in zip(pareto_objective_list, hardness):
+            if pareto_obj[0] >= pop_obj[0] and pareto_obj[1] >= pop_obj[1]:
                 sum_fit += 1.0/fit
-        population_fitness_dict[str(ind)] = 1.0/(1.0 + sum_fit)
+        population_fitness_dict[str(ind)] = float(1.0/(1.0 + sum_fit))
     return population_fitness_dict
 
 def get_probability_list():
@@ -172,20 +177,19 @@ def generation():
             parents = [par for par in children]
             children = clear_children(children)
 
-
-        #ga operator: selection (roulette wheel)
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
         create_pareto_fitness_dict(population, pareto, utility)
         create_population_fitness_dict(population, pareto, pareto_hardness_dict.values(), utility)
         pop_probabilities = get_probability_list()
         pareto_probabilities = get_pareto_probability_list()
+        #ga operator: selection (roulette wheel)
         mating_pool = roulette_wheel_pop(population, pop_probabilities, pop_quota)
         selected_from_pareto = roulette_wheel_pareto(pareto, pareto_probabilities, pareto_quota)
         mating_pool.extend(selected_from_pareto)
 
         #ga operator: crossover
-        for j in range(0,30):
+        for j in range(0,50):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
 
