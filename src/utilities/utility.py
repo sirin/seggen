@@ -175,13 +175,33 @@ class Utility:
     def compare_dissimilarity(self, first, second):
         return self.calculate_dissimilarity(first) >= self.calculate_dissimilarity(second)
 
+    def create_similarity_value_list_of_population(self, ind_list):
+        similarity = []
+        for ind in ind_list:
+            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
+            sim = self.calculate_sim_of_individual(ind_sentences)
+            similarity.append(sim)
+        return similarity
+
+    def create_dissimilarity_value_list_of_population(self, ind_list):
+        dissimilarity = []
+        for ind in ind_list:
+            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
+            dissim = self.calculate_dissimilarity(ind_sentences)
+            dissimilarity.append(dissim)
+        return dissimilarity
+
+    def create_objective_value_list_of_population(self, ind_list):
+        return [[item1,item2] for item1,item2 in zip(self.create_similarity_value_list_of_population(ind_list),self.create_dissimilarity_value_list_of_population(ind_list))]
+
+    # i.e combo -> [ [ [1,0,0,0,0,1], [0.8964, 0.456778] ], [ [0,0,0,0,0,1], [0.56788, 0.43225] ] ]
     def non_dominated(self, ind_list):
         result = []
-        for combo in combinations(ind_list, 2):
-            x_sentence = self.get_segments_from_individual(combo[0],self.refined_sentences)
-            y_sentence = self.get_segments_from_individual(combo[1],self.refined_sentences)
-            if self.compare_similarity(x_sentence,y_sentence) and self.compare_dissimilarity(x_sentence,y_sentence):
-                result.append(combo[0])
+        obj = self.create_objective_value_list_of_population(ind_list)
+        combined = [[item1,item2] for item1,item2 in zip(ind_list,obj)]
+        for combo in combinations(combined, 2):
+            if combo[0][1][0] >= combo[1][1][0] and combo[0][1][1] >= combo[1][1][1]:
+                result.append(combo[0][0])
         return self.remove_duplicate(result)
 
     # used by non_dominated method
@@ -206,27 +226,7 @@ class Utility:
         sentence_repr = self.get_segments_from_individual(individual,self.refined_sentences)
         return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
 
-    def create_similarity_value_list_of_population(self, ind_list):
-        similarity = []
-        for ind in ind_list:
-            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
-            sim = self.calculate_sim_of_individual(ind_sentences)
-            similarity.append(sim)
-        return similarity
 
-    def create_dissimilarity_value_list_of_population(self, ind_list):
-        dissimilarity = []
-        for ind in ind_list:
-            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
-            dissim = self.calculate_dissimilarity(ind_sentences)
-            dissimilarity.append(dissim)
-        return dissimilarity
-
-    def create_objective_value_list_of_population(self, ind_list):
-        similarity = self.create_similarity_value_list_of_population(ind_list)
-        dissimilarity = self.create_dissimilarity_value_list_of_population(ind_list)
-        objective_list = [[item1,item2] for item1,item2 in zip(similarity,dissimilarity)]
-        return objective_list
 
 
 if __name__ == '__main__':
