@@ -57,9 +57,9 @@ def create_population_fitness_dict(population, pareto_set, hardness, utility):
     pop_objective_list = utility.create_objective_value_list_of_population(population)
     for ind,pop_obj in zip(population,pop_objective_list):
         sum_fit = 1.0
-        for pareto_obj, fit in zip(pareto_objective_list, hardness):
+        for pareto_obj, strength in zip(pareto_objective_list, hardness):
             if pareto_obj[0] >= pop_obj[0] and pareto_obj[1] >= pop_obj[1]:
-                sum_fit += 1.0/fit
+                sum_fit += strength
         population_fitness_dict[str(ind)] = float(1.0/(1.0 + sum_fit))
     return population_fitness_dict
 
@@ -155,16 +155,19 @@ def reduceParetoWithSort(pareto, utility):
 
 def generation():
     utility = Utility()
-    population = create_population(100)
+    population = create_population(20)
     parents = []
     children = []
     i = 0
-    count = 0
+    same_count = 0
+    control_group = []
     while True:
         if i == 0:
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
+            control_group = pareto[:]
+            print "%d. step pareto archive" % (i+1)
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -172,10 +175,21 @@ def generation():
             if len(pareto) > len(children):
                 reduced = reduceParetoWithSort(pareto, utility)
                 del pareto[:]
-                pareto = reduced
+                pareto = reduced[:]
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
+            if control_group != pareto:
+                del control_group[:]
+                control_group = pareto[:]
+                same_count = 0
+            else:
+                same_count += 1
+            if same_count >= 20:
+                print "result pareto archive at %d. step" %(i+1)
+                for d in agg_val.items():
+                    print d
+                break
 
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
@@ -189,7 +203,7 @@ def generation():
         mating_pool.extend(selected_from_pareto)
 
         #ga operator: crossover
-        for j in range(0,50):
+        for j in range(0,20):
             indexes = random.sample(set(range(len(mating_pool))), 2)
             children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
 
@@ -200,34 +214,11 @@ def generation():
         children.append(mutated_pmc)
         agg_val = aggregation(pareto, utility)
 
-        if i == 0:
-            copy_pareto = pareto
-            print "%d. step pareto archive" % (i+1)
-            #for a in agg_val.items():
-            #print a
-        else:
-            if copy_pareto != pareto:
-                copy_pareto = pareto
-                count = 0
-                #print "%d. step pareto archive, count %d" % ((i+1),count)
-                #for b in agg_val.items():
-                #print b
-            else:
-                count+=1
-                #print "%d. step pareto archive, count %d" % ((i+1),count)
-                #for c in agg_val.items():
-                #print c
-            if count >= 20:
-                print "result pareto archive at %d. step" %(i+1)
-                for d in agg_val.items():
-                    print d
-                break
-
-        print "pareto archive count %d" % len(pareto)
+        print "pareto archive size %d" % len(pareto)
         i += 1
 
 if __name__ == '__main__':
-    print "Running Test..."
+    print "Running Test"
     print datetime.now()
     generation()
     print datetime.now()

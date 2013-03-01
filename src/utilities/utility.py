@@ -231,9 +231,5 @@ class Utility:
 
 if __name__ == '__main__':
     print "Running Test..."
-    util = Utility()
-    lists = [[0,0,0,0,0,0,0,1,0,0,1,0,0],[0,0,0,0,0,1,0,0,0,0,1,0,0],[0,0,0,1,0,0,0,0,0,0,0,1,1],[0,0,0,1,0,0,0,1,0,0,0,1,0]]
-    print util.non_dominated(lists)
-    print util.running_times
 
 
