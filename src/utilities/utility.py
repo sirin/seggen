@@ -133,9 +133,9 @@ class Utility:
             for prv, nxt in zip(seg, seg[1:]):
                 sum_seg +=  self.compare(prv,nxt)
                 couple_len += 1
-            return sum_seg/couple_len
+            return float(sum_seg/couple_len)
         else:
-            return 1
+            return 1.0
 
     # used by compare_similarity method
     def calculate_sim_of_individual(self, individual):
@@ -143,9 +143,9 @@ class Utility:
         if len(individual) > 1:
             for i in individual:
                 sim +=  self.calculate_cohesion(i)
-            return sim/len(individual)
+            return float(sim/len(individual))
         else:
-            return 1
+            return 1.0
 
     # used by calculate_dissimilarity
     def calculate_simseg(self, segment1, segment2):
@@ -153,7 +153,7 @@ class Utility:
         sum_sim = 0.0
         for x, y in [(x,y) for x in segment1 for y in segment2]:
             sum_sim += self.compare(x,y)
-        return sum_sim / divisor
+        return float(sum_sim/divisor)
 
     # used by compare_dissimilarity
     def calculate_dissimilarity(self, segment_list):
@@ -163,9 +163,9 @@ class Utility:
             for prv, nxt in zip(segment_list, segment_list[1:]):
                 dissimilarity += self.calculate_simseg(prv,nxt)
                 compare_len += 1
-            return (1.0 -(dissimilarity / compare_len))
+            return float(1.0 -(dissimilarity/compare_len))
         else:
-            return 0 #TODO check this point and fix it!
+            return 0.0 #TODO check this point and fix it!
 
     # used by non_dominated and dominates methods
     def compare_similarity(self, first, second):
@@ -192,28 +192,47 @@ class Utility:
         return dissimilarity
 
     def create_objective_value_list_of_population(self, ind_list):
-        return [[item1,item2] for item1,item2 in zip(self.create_similarity_value_list_of_population(ind_list),self.create_dissimilarity_value_list_of_population(ind_list))]
+        similarity = self.create_similarity_value_list_of_population(ind_list)
+        dissimilarity = self.create_dissimilarity_value_list_of_population(ind_list)
+        return [[item1,item2] for item1,item2 in zip(similarity, dissimilarity)]
 
-    # i.e combo -> [ [ [1,0,0,0,0,1], [0.8964, 0.456778] ], [ [0,0,0,0,0,1], [0.56788, 0.43225] ] ]
     def non_dominated(self, ind_list):
         result = []
-        obj = self.create_objective_value_list_of_population(ind_list)
-        combined = [[item1,item2] for item1,item2 in zip(ind_list,obj)]
-        for combo in combinations(combined, 2):
-            if combo[0][1][0] >= combo[1][1][0] and combo[0][1][1] >= combo[1][1][1]:
-                result.append(combo[0][0])
-        return self.remove_duplicate(result)
+        unique = self.remove_duplicate(ind_list)
+        sim = self.create_similarity_value_list_of_population(unique)
+        dis = self.create_dissimilarity_value_list_of_population(unique)
+        temp = self.pareto_frontier(sim, dis, unique, maxX=True, maxY=True)
+        for r in temp:
+            result.append(r[2])
+        return result
+
+    def pareto_frontier(self, Xs, Ys, ind, maxX = True, maxY = True):
+        myList = sorted([[Xs[i], Ys[i],ind[i]] for i in range(len(Xs))], reverse=maxX)
+        p_front = [myList[0]]
+        for pair in myList[1:]:
+            if maxY:
+                if pair[1] >= p_front[-1][1]:
+                    p_front.append(pair)
+            else:
+                if pair[1] <= p_front[-1][1]:
+                    p_front.append(pair)
+        #p_frontX = [pair[0] for pair in p_front]
+        #p_frontY = [pair[1] for pair in p_front]
+        return p_front
 
     # used by non_dominated method
     def remove_duplicate(self, seq):
-        seq.sort()
-        last = seq[-1]
-        for i in range(len(seq)-2, -1, -1):
-            if last == seq[i]:
-                del seq[i]
-            else:
-                last = seq[i]
-        return seq
+        if len(seq) > 1:
+            seq.sort()
+            last = seq[-1]
+            for i in range(len(seq)-2, -1, -1):
+                if last == seq[i]:
+                    del seq[i]
+                else:
+                    last = seq[i]
+            return seq
+        else:
+            return seq
 
     '''
     def dominates(self, x, y):

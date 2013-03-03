@@ -5,6 +5,7 @@ import random
 from cluster import *
 import scipy
 from datetime import datetime
+import bisect
 
 pareto_hardness_dict = {}
 population_fitness_dict = {}
@@ -155,19 +156,20 @@ def reduceParetoWithSort(pareto, utility):
 
 def generation():
     utility = Utility()
-    population = create_population(20)
+    population = create_population(250)
     parents = []
     children = []
     i = 0
     same_count = 0
     control_group = []
-    while True:
+    while i < 5000:
         if i == 0:
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
+            print "1st pareto size %d" % len(pareto)
             control_group = pareto[:]
-            print "%d. step pareto archive" % (i+1)
+            #print "%d. generation pareto archive" % (i+1)
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -185,8 +187,8 @@ def generation():
                 same_count = 0
             else:
                 same_count += 1
-            if same_count >= 20:
-                print "result pareto archive at %d. step" %(i+1)
+            if same_count >= 30:
+                print "result pareto archive at %d. generation" %(i+1)
                 for d in agg_val.items():
                     print d
                 break
@@ -203,9 +205,15 @@ def generation():
         mating_pool.extend(selected_from_pareto)
 
         #ga operator: crossover
-        for j in range(0,20):
-            indexes = random.sample(set(range(len(mating_pool))), 2)
-            children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+        for j in range(0,60):
+            if len(mating_pool) >= 2:
+                indexes = random.sample(range(len(mating_pool)), 2)
+                children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+            else:
+                print "sampler larger than %d" % len(mating_pool)
+                for k in agg_val.items():
+                    print k
+                break
 
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(children))), 2)
@@ -213,8 +221,10 @@ def generation():
         mutated_pmc = mutation_Pmc(children[rand_indexes[0]])
         children.append(mutated_pmc)
         agg_val = aggregation(pareto, utility)
-
-        print "pareto archive size %d" % len(pareto)
+        print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
+        if i == 4999:
+            for t in agg_val.items():
+                print t
         i += 1
 
 if __name__ == '__main__':
