@@ -1,11 +1,27 @@
 __author__ = 'sirinsaygili'
 
+'''
+This file is part of Seggen-Improve Project.
+
+Seggen-Improve is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Seggen-Improve is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Seggen-Improve.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
 from src.utilities.utility import Utility
 import random
 from cluster import *
 import scipy
 from datetime import datetime
-import bisect
 
 pareto_hardness_dict = {}
 population_fitness_dict = {}
@@ -13,18 +29,22 @@ Pmc = 0.8
 Pms = 0.4
 alpha = 5
 
+''' Create binary gene '''
 def create_gene():
     if random.random() < 0.5:
         return 1
     else:
         return 0
 
+''' Create genome consists of binary genes '''
 def create_genome():
     genome = []
     for i in range(13):
         genome.append(create_gene())
     return genome
 
+''' Create population consists of genome
+    for given size '''
 def create_population(size):
     population = []
     for i in xrange(size):
@@ -39,7 +59,8 @@ def clear_parents(parents):
     del parents[:]
     return parents
 
-#return dict {str(list):float}
+''' Create pareto archive strength dictionary
+    consists of {individual:strength} pairs '''
 def create_pareto_fitness_dict(population, pareto_set, utility):
     pareto_objective_list = utility.create_objective_value_list_of_population(pareto_set)
     pop_objective_list = utility.create_objective_value_list_of_population(population)
@@ -52,7 +73,8 @@ def create_pareto_fitness_dict(population, pareto_set, utility):
         pareto_hardness_dict[str(x)] = strength
     return pareto_hardness_dict
 
-#return dict {str(list):float}
+''' Create population fitness dictionary
+    consists of {individual:fitness} pairs '''
 def create_population_fitness_dict(population, pareto_set, hardness, utility):
     pareto_objective_list = utility.create_objective_value_list_of_population(pareto_set)
     pop_objective_list = utility.create_objective_value_list_of_population(population)
@@ -64,6 +86,7 @@ def create_population_fitness_dict(population, pareto_set, hardness, utility):
         population_fitness_dict[str(ind)] = float(1.0/(1.0 + sum_fit))
     return population_fitness_dict
 
+''' Utility method for roulette wheel selection '''
 def get_probability_list():
     fitness = population_fitness_dict.values()
     total_fit = float(sum(fitness))
@@ -71,7 +94,8 @@ def get_probability_list():
     probabilities = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
     return probabilities
 
-    #return list
+''' Select individuals from current population for their fitness values
+    (roulette wheel) fitness proportionate selection '''
 def roulette_wheel_pop(population, probabilities, num):
     new_population = []
     for n in xrange(num):
@@ -82,6 +106,7 @@ def roulette_wheel_pop(population, probabilities, num):
                 break
     return new_population
 
+''' Utility method for roulette wheel selection '''
 def get_pareto_probability_list():
     hardness = pareto_hardness_dict.values()
     total_fit = float(sum(hardness))
@@ -89,7 +114,8 @@ def get_pareto_probability_list():
     pareto_probabilities = [sum(rel_fitness[:i+1]) for i in range(len(rel_fitness))]
     return pareto_probabilities
 
-#return list
+''' Select individuals from pareto archive for their fitness values
+    (roulette wheel) fitness proportionate selection '''
 def roulette_wheel_pareto(pareto_set, pareto_probabilities, num):
     new_population = []
     for n in xrange(num):
@@ -100,22 +126,23 @@ def roulette_wheel_pareto(pareto_set, pareto_probabilities, num):
                 break
     return new_population
 
-#return two lists
+''' Single point crossover '''
 def crossover(organism1, organism2):
     p = random.randint(0, len(organism1)-1)
     offspring1 = organism1[:p] + organism2[p:]
     offspring2 = organism2[:p] + organism1[p:]
     return [offspring1,offspring2]
 
-#return list
+''' A kind of mutation based on with a probability Pms
+    replaced by other individual '''
 def mutation_Pms(organism1, organism2):
     p = random.uniform(0,1)
     if p <= Pms:
         organism1 = organism2
     return organism1
 
-#with a probability Pmc that shifts a boundary of the individual to the next sentence.
-#return list
+''' A kind of mutation based on with a probability Pmc that
+    shifts a boundary of the individual to the next sentence '''
 def mutation_Pmc(organism):
     p = random.uniform(0,1)
     r = random.randint(0,len(organism)-2)
@@ -123,12 +150,15 @@ def mutation_Pmc(organism):
         organism[r], organism[r+1] = organism[r+1], organism[r]
     return organism
 
+''' Trial aggregation function it would be improved '''
 def aggregation(population, utility):
     agg_dict = {}
     for ind in population:
         agg_dict[str(ind)] = utility.calculate_aggregation(ind,alpha)
     return agg_dict
 
+''' Reduce pareto archive size when it over given limit based on
+    hierarchical clustering method '''
 def reduceParetoWithClustering(pareto):
     reduced = []
     cl = HierarchicalClustering(pareto,lambda x,y: scipy.spatial.distance.euclidean(x,y))
@@ -143,6 +173,8 @@ def reduceParetoWithClustering(pareto):
             reduced.append(lev)
     return reduced
 
+''' Reduce pareto archive size when it over given limit based on
+    sorting and picking up upper part of average value '''
 def reduceParetoWithSort(pareto, utility):
     agg = aggregation(pareto, utility)
     values = [x for x in agg.values()]
@@ -154,6 +186,9 @@ def reduceParetoWithSort(pareto, utility):
         temp = temp[-50:]
     return [eval(a) for a in temp]
 
+''' Main genetic algorithm parts of code; create population,
+    create pareto-archive, apply genetic algorithm operators,
+    update pareto-archive '''
 def generation():
     utility = Utility()
     population = create_population(250)
@@ -167,7 +202,6 @@ def generation():
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
-            print "1st pareto size %d" % len(pareto)
             control_group = pareto[:]
             #print "%d. generation pareto archive" % (i+1)
         elif i > 0:
@@ -227,6 +261,7 @@ def generation():
                 print t
         i += 1
 
+''' Main function calls generation method '''
 if __name__ == '__main__':
     print "Running Test"
     print datetime.now()

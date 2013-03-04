@@ -1,13 +1,30 @@
 #! /usr/bin/env python
 __author__ = 'sirin'
 
+'''
+This file is part of Seggen-Improve Project.
+
+Seggen-Improve is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Seggen-Improve is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Seggen-Improve.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
 from nltk.tokenize import word_tokenize
 from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm
-from itertools import combinations
-from datetime import datetime
 
+'''This class provides some utilities are
+    to clear words, to tokenize and to stem'''
 class Pre:
     def fill_sentences_list(self, all_sentences,sentence):
         all_sentences.append(sentence)
@@ -66,7 +83,8 @@ class Pre:
         words = [porter.stem(word) for word in words]
         return words
 
-
+'''This class provides all similarity and dissimilarity
+    calculation between sentences '''
 class Utility:
     starts = {}
     ends = {}
@@ -82,6 +100,7 @@ class Utility:
         all_words.setdefault(word,0)
         all_words[word] += 1
 
+    '''Arrange sentence array regarding to given individual '''
     def get_segments_from_individual(self, individual, sentences):
         pre = Pre()
         temp = []
@@ -97,7 +116,7 @@ class Utility:
             temp = []
         return segments
 
-    # used by compare method
+    '''utility method used by compare method '''
     def doc_vec(self, doc, key_idx):
         v = zeros(len(key_idx))
         for word in doc:
@@ -106,7 +125,8 @@ class Utility:
                 v[keydata[0]] = 1
         return v
 
-    # used by calculate_cohesion method
+    ''' simple comparator method (cosine similarity)
+        used by calculate_cohesion method '''
     def compare(self, doc1, doc2):
         all_words = dict()
         for w in doc1:
@@ -125,7 +145,8 @@ class Utility:
         v2=self.doc_vec(doc2,key_idx)
         return float(dot(v1,v2) / (norm(v1) * norm(v2)))
 
-    # used by calculate_sim_of_individual
+    ''' Calculate internal cohesion value between segments
+        used by calculate_sim_of_individual '''
     def calculate_cohesion(self, seg):
         sum_seg = 0.0
         couple_len = 0
@@ -137,7 +158,7 @@ class Utility:
         else:
             return 1.0
 
-    # used by compare_similarity method
+    ''' Calculate final similarity value of given individual '''
     def calculate_sim_of_individual(self, individual):
         sim = 0.0
         if len(individual) > 1:
@@ -147,7 +168,7 @@ class Utility:
         else:
             return 1.0
 
-    # used by calculate_dissimilarity
+    ''' Calculate similarity value between given two segments '''
     def calculate_simseg(self, segment1, segment2):
         divisor = len(segment1) * len(segment2)
         sum_sim = 0.0
@@ -155,7 +176,7 @@ class Utility:
             sum_sim += self.compare(x,y)
         return float(sum_sim/divisor)
 
-    # used by compare_dissimilarity
+    ''' Calculate final dissimilarity value of given individual '''
     def calculate_dissimilarity(self, segment_list):
         dissimilarity = 0.0
         compare_len = 0
@@ -165,16 +186,20 @@ class Utility:
                 compare_len += 1
             return float(1.0 -(dissimilarity/compare_len))
         else:
-            return 0.0 #TODO check this point and fix it!
+            return 0.0
 
-    # used by non_dominated and dominates methods
+    ''' Compare similarity value of given two individuals
+        returns boolean value'''
     def compare_similarity(self, first, second):
         return self.calculate_sim_of_individual(first) >= self.calculate_sim_of_individual(second)
 
-    # used by non_dominated and dominates methods
+    ''' Compare dissimilarity value of given two individuals
+        returns boolean value'''
     def compare_dissimilarity(self, first, second):
         return self.calculate_dissimilarity(first) >= self.calculate_dissimilarity(second)
 
+    ''' Create similarity value list of given population
+        returns a list that contains similarity values of individuals'''
     def create_similarity_value_list_of_population(self, ind_list):
         similarity = []
         for ind in ind_list:
@@ -183,6 +208,8 @@ class Utility:
             similarity.append(sim)
         return similarity
 
+    ''' Create dissimilarity value list of given population
+        returns a list that contains dissimilarity values of individuals'''
     def create_dissimilarity_value_list_of_population(self, ind_list):
         dissimilarity = []
         for ind in ind_list:
@@ -191,11 +218,15 @@ class Utility:
             dissimilarity.append(dissim)
         return dissimilarity
 
+    ''' Create similarity and dissimilarity value list of given population
+       returns a list that contains [similarity, dissimilarity] values of individuals'''
     def create_objective_value_list_of_population(self, ind_list):
         similarity = self.create_similarity_value_list_of_population(ind_list)
         dissimilarity = self.create_dissimilarity_value_list_of_population(ind_list)
         return [[item1,item2] for item1,item2 in zip(similarity, dissimilarity)]
 
+    ''' Returns a list that contains non-dominated individual of given population
+        and also this method uses pareto_frontier method'''
     def non_dominated(self, ind_list):
         result = []
         unique = self.remove_duplicate(ind_list)
@@ -206,6 +237,8 @@ class Utility:
             result.append(r[2])
         return result
 
+    ''' Apply pareto_frontier selection for maximization of both criteria
+        and returns a list that contains pareto_frontier individuals of population'''
     def pareto_frontier(self, Xs, Ys, ind, maxX = True, maxY = True):
         myList = sorted([[Xs[i], Ys[i],ind[i]] for i in range(len(Xs))], reverse=maxX)
         p_front = [myList[0]]
@@ -220,7 +253,8 @@ class Utility:
         #p_frontY = [pair[1] for pair in p_front]
         return p_front
 
-    # used by non_dominated method
+    '''Return a list that removed duplicate individuals
+        used by non_dominated method '''
     def remove_duplicate(self, seq):
         if len(seq) > 1:
             seq.sort()
@@ -234,18 +268,10 @@ class Utility:
         else:
             return seq
 
-    '''
-    def dominates(self, x, y):
-        x_sentence = self.get_segments_from_individual(x,self.refined_sentences)
-        y_sentence = self.get_segments_from_individual(y,self.refined_sentences)
-        return self.compare_similarity(x_sentence, y_sentence) and self.compare_dissimilarity(x_sentence, y_sentence)
-    '''
-
+    '''Trial aggregation function it would be improved '''
     def calculate_aggregation(self, individual, alpha):
         sentence_repr = self.get_segments_from_individual(individual,self.refined_sentences)
         return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
-
-
 
 
 if __name__ == '__main__':
