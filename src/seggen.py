@@ -27,6 +27,7 @@ pareto_hardness_dict = {}
 population_fitness_dict = {}
 Pmc = 0.8
 Pms = 0.4
+P = 0.5
 alpha = 5
 
 ''' Create binary gene '''
@@ -142,12 +143,22 @@ def mutation_Pms(organism1, organism2):
     return organism1
 
 ''' A kind of mutation based on with a probability Pmc that
-    shifts a boundary of the individual to the next sentence '''
+    do bit flip on given individual '''
 def mutation_Pmc(organism):
     p = random.uniform(0,1)
     r = random.randint(0,len(organism)-2)
     if p <= Pmc:
         organism[r], organism[r+1] = organism[r+1], organism[r]
+    return organism
+
+''' A kind of mutation based on with a probability P that
+    do bit flip on given individual '''
+def mutation_boundary_shift(organism):
+    p = random.uniform(0,1)
+    if p <= P:
+        for index, element in enumerate(organism):
+            if element == 1 and index > 0 and index < len(organism):
+                organism[index], organism[index-1] = organism[index-1], organism[index]
     return organism
 
 ''' Trial aggregation function it would be improved '''
@@ -222,9 +233,13 @@ def generation():
             else:
                 same_count += 1
             if same_count >= 30:
+                result = []
+                for d,val in zip(agg_val.items(),agg_val.values()):
+                    if val >= 4.9:
+                        result.append(d)
                 print "result pareto archive at %d. generation" %(i+1)
-                for d in agg_val.items():
-                    print d
+                for item in result:
+                    print item
                 break
 
         pareto_quota = random.randint(1, len(pareto))
@@ -253,7 +268,10 @@ def generation():
         rand_indexes = random.sample(set(range(len(children))), 2)
         children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]])
         mutated_pmc = mutation_Pmc(children[rand_indexes[0]])
+        #print "fst %f" % utility.calculate_aggregation(mutated_pmc, alpha)
+        test_mutated = mutation_boundary_shift(children[rand_indexes[0]])
         children.append(mutated_pmc)
+        #print "scn %f" % utility.calculate_aggregation(test_mutated, alpha)
         agg_val = aggregation(pareto, utility)
         print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
         if i == 4999:
