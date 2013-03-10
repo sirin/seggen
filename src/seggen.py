@@ -174,6 +174,16 @@ def mutation_boundary_shift(organism):
             organism[pick] = 1
     return organism
 
+''' A kind of mutation based on with a probability P that
+    add a boundary into given individual '''
+def mutation_add_boundary(organism):
+    p = random.uniform(0,1)
+    if p <= P:
+        indices = [item for item in range(len(organism)) if organism[item] == 0]
+        pick = random.sample(indices,1)
+        organism[pick[0]] = 1
+    return organism
+
 ''' Trial aggregation function it would be improved '''
 def aggregation(population, utility):
     agg_dict = {}
@@ -284,6 +294,8 @@ def generation():
         #mutated_pmc = mutation_Pmc(children[rand_indexes[0]])
         mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]])
         children.append(mutated_boundary_shift)
+        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]])
+        children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
         print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
         if i == 4999:
