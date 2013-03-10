@@ -152,13 +152,26 @@ def mutation_Pmc(organism):
     return organism
 
 ''' A kind of mutation based on with a probability P that
-    do bit flip on given individual '''
+    do shift boundary to next sentence on given individual '''
 def mutation_boundary_shift(organism):
     p = random.uniform(0,1)
     if p <= P:
-        for index, element in enumerate(organism):
-            if element == 1 and index > 0 and index < len(organism):
-                organism[index], organism[index-1] = organism[index-1], organism[index]
+        indices = [item for item in range(len(organism)) if organism[item] == 1]
+        if len(indices)>=2:
+            points = random.sample(indices,2)
+            if points[0]<len(organism)-1 and points[1]<len(organism)-1:
+                organism[points[0]], organism[points[0]+1] = 0, 1
+                organism[points[1]], organism[points[1]+1] = 0, 1
+            elif points[0] != len(organism)-1:
+                organism[points[0]], organism[points[0]+1] = 0, 1
+            elif points[1] != len(organism)-1:
+                organism[points[1]], organism[points[1]+1] = 0, 1
+        elif len(indices) == 1:
+            if indices[0] != len(organism)-1:
+                organism[indices[0]], organism[indices[0]+1] = 0, 1
+        else:
+            pick = random.randint(0,len(organism)-1)
+            organism[pick] = 1
     return organism
 
 ''' Trial aggregation function it would be improved '''
@@ -248,6 +261,7 @@ def generation():
         create_population_fitness_dict(population, pareto, pareto_hardness_dict.values(), utility)
         pop_probabilities = get_probability_list()
         pareto_probabilities = get_pareto_probability_list()
+
         #ga operator: selection (roulette wheel)
         mating_pool = roulette_wheel_pop(population, pop_probabilities, pop_quota)
         selected_from_pareto = roulette_wheel_pareto(pareto, pareto_probabilities, pareto_quota)
@@ -267,11 +281,9 @@ def generation():
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(children))), 2)
         children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]])
-        mutated_pmc = mutation_Pmc(children[rand_indexes[0]])
-        #print "fst %f" % utility.calculate_aggregation(mutated_pmc, alpha)
-        test_mutated = mutation_boundary_shift(children[rand_indexes[0]])
-        children.append(mutated_pmc)
-        #print "scn %f" % utility.calculate_aggregation(test_mutated, alpha)
+        #mutated_pmc = mutation_Pmc(children[rand_indexes[0]])
+        mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]])
+        children.append(mutated_boundary_shift)
         agg_val = aggregation(pareto, utility)
         print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
         if i == 4999:
