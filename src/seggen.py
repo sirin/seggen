@@ -134,6 +134,31 @@ def crossover(organism1, organism2):
     offspring2 = organism2[:p] + organism1[p:]
     return [offspring1,offspring2]
 
+''' Two points keep boundary crossover '''
+def crossover_keep_boundary(organism1, organism2):
+    indices1 = [item for item in range(len(organism1)) if organism1[item] == 1]
+    indices2 = [item for item in range(len(organism2)) if organism2[item] == 1]
+    common = list(set(indices1) & set(indices2))
+    if len(common)>=2:
+        points = random.sample(common,2)
+        points.sort()
+        offspring1 = organism1[:points[0]] + organism2[points[0]:points[1]]+ organism1[points[1]:]
+        offspring2 = organism2[:points[0]] + organism1[points[0]:points[1]]+ organism2[points[1]:]
+    elif len(common) == 1:
+        r = random.randint(0, len(organism1)-1)
+        if r >= common[0]:
+            offspring1 = organism1[:common[0]] + organism2[common[0]:r]+ organism1[r:]
+            offspring2 = organism2[:common[0]] + organism1[common[0]:r]+ organism2[r:]
+        else:
+            offspring1 = organism1[:r] + organism2[r:common[0]]+ organism1[common[0]:]
+            offspring2 = organism2[:r] + organism1[r:common[0]]+ organism2[common[0]:]
+    else:
+        pick = random.sample(range(len(organism1)),2)
+        pick.sort()
+        offspring1 = organism1[:pick[0]] + organism2[pick[0]:pick[1]]+ organism1[pick[1]:]
+        offspring2 = organism2[:pick[0]] + organism1[pick[0]:pick[1]]+ organism2[pick[1]:]
+    return [offspring1,offspring2]
+
 ''' A kind of mutation based on with a probability Pms
     replaced by other individual '''
 def mutation_Pms(organism1, organism2):
@@ -282,6 +307,7 @@ def generation():
             if len(mating_pool) >= 2:
                 indexes = random.sample(range(len(mating_pool)), 2)
                 children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+                children.extend(crossover_keep_boundary(mating_pool[indexes[0]], mating_pool[indexes[1]]))
             else:
                 print "sampler larger than %d" % len(mating_pool)
                 for k in agg_val.items():
