@@ -25,9 +25,6 @@ from datetime import datetime
 
 pareto_hardness_dict = {}
 population_fitness_dict = {}
-Pmc = 0.8
-Pms = 0.4
-P = 0.5
 alpha = 5
 
 ''' Create binary gene '''
@@ -161,7 +158,7 @@ def crossover_keep_boundary(organism1, organism2):
 
 ''' A kind of mutation based on with a probability Pms
     replaced by other individual '''
-def mutation_Pms(organism1, organism2):
+def mutation_Pms(organism1, organism2, Pms):
     p = random.uniform(0,1)
     if p <= Pms:
         organism1 = organism2
@@ -169,7 +166,7 @@ def mutation_Pms(organism1, organism2):
 
 ''' A kind of mutation based on with a probability Pmc that
     do bit flip on given individual '''
-def mutation_Pmc(organism):
+def mutation_Pmc(organism, Pmc):
     p = random.uniform(0,1)
     r = random.randint(0,len(organism)-2)
     if p <= Pmc:
@@ -178,9 +175,9 @@ def mutation_Pmc(organism):
 
 ''' A kind of mutation based on with a probability P that
     do shift boundary to next sentence on given individual '''
-def mutation_boundary_shift(organism):
+def mutation_boundary_shift(organism, Pbs):
     p = random.uniform(0,1)
-    if p <= P:
+    if p <= Pbs:
         indices = [item for item in range(len(organism)) if organism[item] == 1]
         if len(indices)>=2:
             points = random.sample(indices,2)
@@ -201,9 +198,9 @@ def mutation_boundary_shift(organism):
 
 ''' A kind of mutation based on with a probability P that
     add a boundary into given individual '''
-def mutation_add_boundary(organism):
+def mutation_add_boundary(organism, Pbs):
     p = random.uniform(0,1)
-    if p <= P:
+    if p <= Pbs:
         indices = [item for item in range(len(organism)) if organism[item] == 0]
         pick = random.sample(indices,1)
         organism[pick[0]] = 1
@@ -256,13 +253,16 @@ def generation():
     i = 0
     same_count = 0
     control_group = []
+    Pms = 0.8
+    Pmc = 0.4
+    Pbs = 0.1
+    prob_list = []
     while i < 5000:
         if i == 0:
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
             control_group = pareto[:]
-            #print "%d. generation pareto archive" % (i+1)
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -316,14 +316,27 @@ def generation():
 
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(children))), 2)
-        children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]])
-        #mutated_pmc = mutation_Pmc(children[rand_indexes[0]])
-        mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]])
+        children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]], Pms)
+        #mutated_pmc = mutation_Pmc(children[rand_indexes[0]], Pmc)
+        mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
         children.append(mutated_boundary_shift)
-        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]])
+        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
         children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
-        print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
+        #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
+        if i == 9:
+            values = [x for x in agg_val.values()]
+            mean_val = sum(values) / float(len(values))
+            prob_list.append(mean_val)
+        if i>0 and i%10 == 0:
+            values = [x for x in agg_val.values()]
+            mean = sum(values) / float(len(values))
+            if mean <= prob_list[-1] and Pbs<=0.8:
+                Pbs+=0.05
+            print "average of population %f at %d . generation" % (mean, (i+1))
+            print "new Pbs value %f" % Pbs
+            prob_list.append(mean)
+
         if i == 4999:
             for t in agg_val.items():
                 print t
