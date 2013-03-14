@@ -290,6 +290,7 @@ def generation():
                     print item
                 break
 
+
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
         create_pareto_fitness_dict(population, pareto, utility)
@@ -331,12 +332,19 @@ def generation():
         if i>0 and i%10 == 0:
             values = [x for x in agg_val.values()]
             mean = sum(values) / float(len(values))
-            if mean <= prob_list[-1] and Pbs<=0.8:
+            if mean < prob_list[-1] and Pbs<=0.8:
                 Pbs+=0.05
-            print "average of population %f at %d . generation" % (mean, (i+1))
-            print "new Pbs value %f" % Pbs
+           # print "average of population %f at %d . generation" % (mean, (i+1))
+           # print "new Pbs value %f" % Pbs
             prob_list.append(mean)
 
+#        v = [x for x in agg_val.values()]
+#        v.sort()
+#        if v[0] >= 4.5:
+#            print "last Pbs value %f" % Pbs
+#            for item in agg_val:
+#                print item
+#                break
         if i == 4999:
             for t in agg_val.items():
                 print t
