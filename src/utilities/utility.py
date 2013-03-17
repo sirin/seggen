@@ -173,7 +173,10 @@ class Utility:
         divisor = len(segment1) * len(segment2)
         sum_sim = 0.0
         for x, y in [(x,y) for x in segment1 for y in segment2]:
-            sum_sim += self.compare(x,y)
+            if x == segment1[-1] and y == segment2[0]:
+                sum_sim += (self.compare(x,y)*0.9)
+            else:
+                sum_sim += self.compare(x,y)
         return float(sum_sim/divisor)
 
     ''' Calculate final dissimilarity value of given individual '''
@@ -187,16 +190,6 @@ class Utility:
             return float(1.0 -(dissimilarity/compare_len))
         else:
             return 0.0
-
-    ''' Compare similarity value of given two individuals
-        returns boolean value'''
-    def compare_similarity(self, first, second):
-        return self.calculate_sim_of_individual(first) >= self.calculate_sim_of_individual(second)
-
-    ''' Compare dissimilarity value of given two individuals
-        returns boolean value'''
-    def compare_dissimilarity(self, first, second):
-        return self.calculate_dissimilarity(first) >= self.calculate_dissimilarity(second)
 
     ''' Create similarity value list of given population
         returns a list that contains similarity values of individuals'''
