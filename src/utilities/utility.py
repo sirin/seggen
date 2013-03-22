@@ -93,7 +93,7 @@ class Utility:
     refined_sentences = []
     def __init__(self):
         pre = Pre()
-        for i in open("/Users/sirinsaygili/workspace/seggen/src/N1.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/src/N2.txt"):
             pre.fill_sentences_list(self.refined_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
@@ -173,10 +173,7 @@ class Utility:
         divisor = len(segment1) * len(segment2)
         sum_sim = 0.0
         for x, y in [(x,y) for x in segment1 for y in segment2]:
-            if x == segment1[-1] and y == segment2[0]:
-                sum_sim += (self.compare(x,y)*0.9)
-            else:
-                sum_sim += self.compare(x,y)
+            sum_sim += self.compare(x,y)
         return float(sum_sim/divisor)
 
     ''' Calculate final dissimilarity value of given individual '''

@@ -37,7 +37,7 @@ def create_gene():
 ''' Create genome consists of binary genes '''
 def create_genome():
     genome = []
-    for i in range(13):
+    for i in range(25):
         genome.append(create_gene())
     return genome
 
@@ -334,8 +334,8 @@ def generation():
             mean = sum(values) / float(len(values))
             if mean < prob_list[-1] and Pbs<=0.8:
                 Pbs+=0.05
-           # print "average of population %f at %d . generation" % (mean, (i+1))
-           # print "new Pbs value %f" % Pbs
+            print "average of population %f at %d . generation" % (mean, (i+1))
+            print "new Pbs value %f" % Pbs
             prob_list.append(mean)
 
 #        v = [x for x in agg_val.values()]
