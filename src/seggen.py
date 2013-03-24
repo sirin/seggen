@@ -242,19 +242,6 @@ def reduceParetoWithSort(pareto, utility):
         temp = temp[-50:]
     return [eval(a) for a in temp]
 
-''' Tuning fitness function'''
-def weightedValues(population):
-    alpha = []
-    for p in population:
-        v = [0]*(len(p)+1)
-        for i in xrange(len(p)):
-            if p[i] == 1:
-                v[i], v[i+1] = 2, 2
-        total = (2.0*v.count(2))
-        alpha.append([-x/total if x == 2 else 0 for x in v])
-    return alpha
-
-
 ''' Main genetic algorithm parts of code; create population,
     create pareto-archive, apply genetic algorithm operators,
     update pareto-archive '''
@@ -276,6 +263,10 @@ def generation():
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
             control_group = pareto[:]
+            print "weighted"
+            print utility.calculate_weighted_aggregation(population[0],5)
+            print "raw"
+            print utility.calculate_aggregation(population[0], 5)
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -287,6 +278,7 @@ def generation():
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
+
             if control_group != pareto:
                 del control_group[:]
                 control_group = pareto[:]

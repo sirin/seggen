@@ -23,7 +23,7 @@ from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm
 
-'''This class provides some utilities are
+''' This class provides some utilities are
     to clear words, to tokenize and to stem'''
 class Pre:
     def fill_sentences_list(self, all_sentences,sentence):
@@ -83,7 +83,7 @@ class Pre:
         words = [porter.stem(word) for word in words]
         return words
 
-'''This class provides all similarity and dissimilarity
+''' This class provides all similarity and dissimilarity
     calculation between sentences '''
 class Utility:
     starts = {}
@@ -209,7 +209,7 @@ class Utility:
         return dissimilarity
 
     ''' Create similarity and dissimilarity value list of given population
-       returns a list that contains [similarity, dissimilarity] values of individuals'''
+        returns a list that contains [similarity, dissimilarity] values of individuals'''
     def create_objective_value_list_of_population(self, ind_list):
         similarity = self.create_similarity_value_list_of_population(ind_list)
         dissimilarity = self.create_dissimilarity_value_list_of_population(ind_list)
@@ -243,7 +243,7 @@ class Utility:
         #p_frontY = [pair[1] for pair in p_front]
         return p_front
 
-    '''Return a list that removed duplicate individuals
+    ''' Return a list that removed duplicate individuals
         used by non_dominated method '''
     def remove_duplicate(self, seq):
         if len(seq) > 1:
@@ -258,11 +258,70 @@ class Utility:
         else:
             return seq
 
-    '''Trial aggregation function it would be improved '''
+    ''' Trial aggregation function it would be improved '''
     def calculate_aggregation(self, individual, alpha):
         sentence_repr = self.get_segments_from_individual(individual,self.refined_sentences)
         return self.calculate_sim_of_individual(sentence_repr)+(alpha*self.calculate_dissimilarity(sentence_repr))
 
+    ''' Tuning fitness function'''
+    def weightedValues(self, individual):
+        v = [1]*(len(individual)+1)
+        for i in xrange(len(individual)):
+            if individual[i] == 1:
+                v[i], v[i+1] = 2, 2
+            total = (2.0*v.count(2))
+        value = [-x/total if x == 2 else 1 for x in v]
+        return value
+
+    ''' Calculate internal cohesion value between segments
+        used by calculate_sim_of_individual '''
+    def calculate_weighted_cohesion(self, seg, weight):
+        sum_seg = 0.0
+        couple_len = 0
+        if len(seg) > 1:
+            for prv, nxt, w_prv, w_nxt in zip(seg, seg[1:], weight, weight[1:]):
+                sum_seg +=  self.compare(prv,nxt)*(w_prv*w_nxt)
+                couple_len += 1
+            return float(sum_seg/couple_len)
+        else:
+            return 1.0
+
+    ''' Calculate final similarity value of given individual '''
+    def calculate_weighted_sim_of_individual(self, individual, weighted):
+        sim = 0.0
+        if len(individual) > 1:
+            for i, j in zip(individual, weighted):
+                sim +=  self.calculate_weighted_cohesion(i, j)
+            return float(sim/len(individual))
+        else:
+            return 1.0
+
+    ''' Calculate similarity value between given two segments '''
+    def calculate_weighted_simseg(self, segment1, segment2, weight1, weight2):
+        divisor = len(segment1) * len(segment2)
+        sum_sim = 0.0
+        for x, y, w_x, w_y  in zip(segment1, segment2, weight1, weight2):
+            sum_sim += self.compare(x,y)*(w_x*w_y)
+        return float(sum_sim/divisor)
+
+    ''' Calculate final dissimilarity value of given individual '''
+    def calculate_weighted_dissimilarity(self, segment_list, weight_list):
+        dissimilarity = 0.0
+        compare_len = 0
+        if len(segment_list) > 1:
+            for prv, nxt, w_prv, w_nxt in zip(segment_list, segment_list[1:], weight_list, weight_list[1:]):
+                dissimilarity += self.calculate_weighted_simseg(prv, nxt, w_prv, w_nxt)
+                compare_len += 1
+            return float(1.0 -(dissimilarity/compare_len))
+        else:
+            return 0.0
+
+    ''' Weighted value aggregation function, every sentence has a coefficient '''
+    def calculate_weighted_aggregation(self, individual, alpha):
+        weighted = self.weightedValues(individual)
+        weighted_repr = self.get_segments_from_individual(individual, weighted)
+        sentence_repr = self.get_segments_from_individual(individual, self.refined_sentences)
+        return self.calculate_weighted_sim_of_individual(sentence_repr, weighted_repr)+(alpha*self.calculate_weighted_dissimilarity(sentence_repr, weighted_repr))
 
 if __name__ == '__main__':
     print "Running Test..."

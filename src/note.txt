@@ -1,0 +1,2 @@
+1) to measure global quality of population, select random 10% of population and calculate aggregation.
+2) above method could be used for stop criteria when every 10 generation use this aggregation method and if the result is satisfied or stagnated.
