@@ -37,7 +37,7 @@ def create_gene():
 ''' Create genome consists of binary genes '''
 def create_genome():
     genome = []
-    for i in range(25):
+    for i in range(13):
         genome.append(create_gene())
     return genome
 
@@ -213,6 +213,13 @@ def aggregation(population, utility):
         agg_dict[str(ind)] = utility.calculate_aggregation(ind,alpha)
     return agg_dict
 
+''' Trial weighted aggregation function it would be improved '''
+def weighted_aggregation(population, utility):
+    w_agg_dict = {}
+    for ind in population:
+        w_agg_dict[str(ind)] = utility.calculate_weighted_aggregation(ind,alpha)
+    return w_agg_dict
+
 ''' Reduce pareto archive size when it over given limit based on
     hierarchical clustering method '''
 def reduceParetoWithClustering(pareto):
@@ -293,6 +300,13 @@ def generation():
                 print "result pareto archive at %d. generation" %(i+1)
                 for item in result:
                     print item
+                w_result = []
+                for ind, value in zip(w_agg_val.items(),w_agg_val.values()):
+                    if value >= 4.9:
+                        w_result.append(ind)
+                print "result weighted pareto archive at %d. generation" %(i+1)
+                for w_item in w_result:
+                    print w_item
                 break
 
 
@@ -329,6 +343,7 @@ def generation():
         mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
         children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
+        w_agg_val = weighted_aggregation(pareto, utility)
         #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
         if i == 9:
             values = [x for x in agg_val.values()]
