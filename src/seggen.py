@@ -249,6 +249,16 @@ def reduceParetoWithSort(pareto, utility):
         temp = temp[-50:]
     return [eval(a) for a in temp]
 
+def get_diff(basic, weighted):
+    diff = {}
+    for i_val, j_val, j in zip(basic.values(),weighted.values(),weighted.keys()):
+        diff[j] = abs(i_val-j_val)
+    print "diff values "
+    for a, v in zip(diff.items(),diff.values()):
+        if v <= 1.0:
+            print a
+
+
 ''' Main genetic algorithm parts of code; create population,
     create pareto-archive, apply genetic algorithm operators,
     update pareto-archive '''
@@ -270,10 +280,6 @@ def generation():
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
             control_group = pareto[:]
-            print "weighted"
-            print utility.calculate_weighted_aggregation(population[0],5)
-            print "raw"
-            print utility.calculate_aggregation(population[0], 5)
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -300,13 +306,15 @@ def generation():
                 print "result pareto archive at %d. generation" %(i+1)
                 for item in result:
                     print item
-                w_result = []
-                for ind, value in zip(w_agg_val.items(),w_agg_val.values()):
-                    if value >= 4.9:
-                        w_result.append(ind)
+                common = []
+                for x, key in zip(w_agg_val.items(), w_agg_val.keys()):
+                    for y, z in zip(agg_val.keys(), agg_val.values()):
+                        if key == y and z >= 4.9:
+                            common.append(x)
                 print "result weighted pareto archive at %d. generation" %(i+1)
-                for w_item in w_result:
+                for w_item in common:
                     print w_item
+                get_diff(agg_val,w_agg_val)
                 break
 
 
