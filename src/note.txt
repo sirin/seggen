@@ -1,3 +1,6 @@
 1) to measure global quality of population, select random 10% of population and calculate aggregation.
 2) above method could be used for stop criteria when every 10 generation use this aggregation method and if the result is satisfied or stagnated.
 3) weighted degeriyle raw degeri birbirine yakin olanlari alabiliriz (fitness conditionda kullanmak icin)
+
+*weighted yaklasimini kullanan iyi bir fitness/sonlanma fonksiyonu kullanmak gerek -> basic ve weighted farki ise yarayabilir mi?
+*makale icin sadece seggen ve bizim kodu karsilastirmak yeterli olur mu?

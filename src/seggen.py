@@ -253,10 +253,10 @@ def get_diff(basic, weighted):
     diff = {}
     for i_val, j_val, j in zip(basic.values(),weighted.values(),weighted.keys()):
         diff[j] = abs(i_val-j_val)
-    print "diff values "
-    for a, v in zip(diff.items(),diff.values()):
-        if v <= 1.0:
-            print a
+    for a, v in zip(diff.keys(),diff.values()):
+        if v > 0.79:
+            del diff[a]
+    return diff
 
 
 ''' Main genetic algorithm parts of code; create population,
@@ -270,6 +270,7 @@ def generation():
     i = 0
     same_count = 0
     control_group = []
+    control = {}
     Pms = 0.8
     Pmc = 0.4
     Pbs = 0.1
@@ -291,30 +292,34 @@ def generation():
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
-
-            if control_group != pareto:
-                del control_group[:]
-                control_group = pareto[:]
+#            if control_group != pareto:
+#                del control_group[:]
+#                control_group = pareto[:]
+#                same_count = 0
+#            else:
+#                same_count += 1
+#            if same_count >= 30:
+#                result = []
+#                for d,val in zip(agg_val.items(),agg_val.values()):
+#                    if val >= 4.9:
+#                        result.append(d)
+#                print "result pareto archive at %d. generation" %(i+1)
+#                for item in result:
+#                    print item
+#                print "result weighted pareto archive at %d. generation" %(i+1)
+#                for w_item in w_agg_val.items():
+#                    print w_item
+#                break
+            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
+                control.clear()
+                control = get_diff(agg_val,w_agg_val)
                 same_count = 0
             else:
                 same_count += 1
             if same_count >= 30:
-                result = []
-                for d,val in zip(agg_val.items(),agg_val.values()):
-                    if val >= 4.9:
-                        result.append(d)
-                print "result pareto archive at %d. generation" %(i+1)
-                for item in result:
-                    print item
-                common = []
-                for x, key in zip(w_agg_val.items(), w_agg_val.keys()):
-                    for y, z in zip(agg_val.keys(), agg_val.values()):
-                        if key == y and z >= 4.9:
-                            common.append(x)
-                print "result weighted pareto archive at %d. generation" %(i+1)
-                for w_item in common:
-                    print w_item
-                get_diff(agg_val,w_agg_val)
+                print "result diff between basic and weighted at %d. generation" %(i+1)
+                for t in control.items():
+                    print t
                 break
 
 
