@@ -94,7 +94,7 @@ class Utility:
     refined_sentences = []
     def __init__(self):
         pre = Pre()
-        for i in open("/Users/sirinsaygili/workspace/seggen/src/N2.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/src/N1.txt"):
             pre.fill_sentences_list(self.refined_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
@@ -328,6 +328,40 @@ class Utility:
         weighted_repr = self.get_segments_from_individual(individual, weighted)
         sentence_repr = self.get_segments_from_individual(individual, self.refined_sentences)
         return self.calculate_weighted_sim_of_individual(sentence_repr, weighted_repr)+(alpha*self.calculate_weighted_dissimilarity(sentence_repr, weighted_repr))
+
+    ''' Weighted similarity list of population'''
+    def weighted_similarity_value_list_of_population(self, ind_list):
+        similarity = []
+        for ind in ind_list:
+            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
+            weight = self.weightedValues(ind)
+            weighted_repr = self.get_segments_from_individual(ind, weight)
+            sim = self.calculate_weighted_sim_of_individual(ind_sentences,weighted_repr)
+            similarity.append(sim)
+        return similarity
+
+    ''' Weighted dissimilarity list of population'''
+    def weighted_dissimilarity_value_list_of_population(self, ind_list):
+        dissimilarity = []
+        for ind in ind_list:
+            ind_sentences = self.get_segments_from_individual(ind,self.refined_sentences)
+            weight = self.weightedValues(ind)
+            weighted_repr = self.get_segments_from_individual(ind, weight)
+            dissim = self.calculate_weighted_dissimilarity(ind_sentences,weighted_repr)
+            dissimilarity.append(dissim)
+        return dissimilarity
+
+    ''' Weighted non-dominated'''
+    def weighted_non_dominated(self, ind_list):
+        result = []
+        unique = self.remove_duplicate(ind_list)
+        sim = self.weighted_similarity_value_list_of_population(unique)
+        dis = self.weighted_dissimilarity_value_list_of_population(unique)
+        temp = self.pareto_frontier(sim, dis, unique, maxX=True, maxY=True)
+        for r in temp:
+            result.append(r[2])
+        return result
+
 
 if __name__ == '__main__':
     print "Running Test..."

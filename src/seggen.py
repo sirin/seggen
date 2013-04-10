@@ -23,6 +23,7 @@ from cluster import *
 import scipy
 from datetime import datetime
 
+
 pareto_hardness_dict = {}
 population_fitness_dict = {}
 alpha = 5
@@ -280,11 +281,14 @@ def generation():
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
+            #pareto = utility.weighted_non_dominated(parents)
             control_group = pareto[:]
         elif i > 0:
             new_pareto = utility.non_dominated(children)
+            #new_pareto = utility.weighted_non_dominated(children)
             pareto.extend(new_pareto)
             pareto = utility.non_dominated(pareto)
+            #pareto = utility.weighted_non_dominated(pareto)
             if len(pareto) > len(children):
                 reduced = reduceParetoWithSort(pareto, utility)
                 del pareto[:]
@@ -292,36 +296,35 @@ def generation():
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
-#            if control_group != pareto:
-#                del control_group[:]
-#                control_group = pareto[:]
-#                same_count = 0
-#            else:
-#                same_count += 1
-#            if same_count >= 30:
-#                result = []
-#                for d,val in zip(agg_val.items(),agg_val.values()):
-#                    if val >= 4.9:
-#                        result.append(d)
-#                print "result pareto archive at %d. generation" %(i+1)
-#                for item in result:
-#                    print item
-#                print "result weighted pareto archive at %d. generation" %(i+1)
-#                for w_item in w_agg_val.items():
-#                    print w_item
-#                break
-            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
-                control.clear()
-                control = get_diff(agg_val,w_agg_val)
+            if control_group != pareto:
+                del control_group[:]
+                control_group = pareto[:]
                 same_count = 0
             else:
                 same_count += 1
             if same_count >= 30:
-                print "result diff between basic and weighted at %d. generation" %(i+1)
-                for t in control.items():
-                    print t
+                result = []
+                for d,val in zip(agg_val.items(),agg_val.values()):
+                    if val >= 4.9:
+                        result.append(d)
+                print "result pareto archive at %d. generation" %(i+1)
+                for item in result:
+                    print item
+                print "result weighted pareto archive at %d. generation" %(i+1)
+                for w_item in w_agg_val.items():
+                    print w_item
                 break
-
+#            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
+#                control.clear()
+#                control = get_diff(agg_val,w_agg_val)
+#                same_count = 0
+#            else:
+#                same_count += 1
+#            if same_count >= 30:
+#                print "result diff between basic and weighted at %d. generation" %(i+1)
+#                for t in control.items():
+#                    print t
+#                break
 
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
