@@ -22,6 +22,7 @@ from nltk.tokenize import word_tokenize
 from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm
+import numpy
 
 ''' This class provides some utilities are
     to clear words, to tokenize and to stem'''
@@ -93,7 +94,7 @@ class Utility:
     refined_sentences = []
     def __init__(self):
         pre = Pre()
-        for i in open("/Users/sirinsaygili/workspace/seggen/src/N1.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/src/N2.txt"):
             pre.fill_sentences_list(self.refined_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
@@ -267,11 +268,16 @@ class Utility:
     def weightedValues(self, individual):
         v = [1]*(len(individual)+1)
         for i in xrange(len(individual)):
-            if individual[i] == 1:
-                v[i], v[i+1] = 2, 2
-            total = (2.0*v.count(2))
-        value = [-x/total if x == 2 else 1 for x in v]
-        return value
+            if i == 0 :
+                if individual[i] == 1:
+                    v[i], v[i+1], v[i+2] = -numpy.log10(3),-numpy.log10(3),-numpy.log10(4)
+            elif i == len(individual)-1:
+                if individual[i] == 1:
+                    v[i], v[i+1], v[i-1] = -numpy.log10(3),-numpy.log10(3),-numpy.log10(4)
+            else:
+                if individual[i] == 1:
+                    v[i], v[i+1], v[i-1], v[i+2] = -numpy.log10(3),-numpy.log10(3),-numpy.log10(4),-numpy.log10(4)
+        return v
 
     ''' Calculate internal cohesion value between segments
         used by calculate_sim_of_individual '''
