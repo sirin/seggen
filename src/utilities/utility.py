@@ -23,6 +23,7 @@ from nltk import PorterStemmer
 from numpy import zeros,dot
 from numpy.linalg import norm
 import numpy
+import matplotlib.pyplot as plt
 
 ''' This class provides some utilities are
     to clear words, to tokenize and to stem'''
@@ -223,7 +224,14 @@ class Utility:
         unique = self.remove_duplicate(ind_list)
         sim = self.create_similarity_value_list_of_population(unique)
         dis = self.create_dissimilarity_value_list_of_population(unique)
+        print sim
+        print dis
         temp = self.pareto_frontier(sim, dis, unique, maxX=True, maxY=True)
+#        plt.scatter(sim,dis)
+#        p_frontX = [pair[0] for pair in temp]
+#        p_frontY = [pair[1] for pair in temp]
+#        plt.plot(p_frontX, p_frontY)
+#        plt.show()
         for r in temp:
             result.append(r[2])
         return result
