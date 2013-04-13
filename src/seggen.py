@@ -22,7 +22,7 @@ import random
 from cluster import *
 import scipy
 from datetime import datetime
-
+from nltk.metrics import windowdiff
 
 pareto_hardness_dict = {}
 population_fitness_dict = {}
@@ -259,6 +259,13 @@ def get_diff(basic, weighted):
             del diff[a]
     return diff
 
+def pick_better_results(population,utility):
+    result = []
+    for i in population:
+        if utility.calculate_aggregation(i,alpha) >= 4.9:
+            result.append(i)
+    return result
+
 
 ''' Main genetic algorithm parts of code; create population,
     create pareto-archive, apply genetic algorithm operators,
@@ -303,17 +310,16 @@ def generation():
             else:
                 same_count += 1
             if same_count >= 30:
-                result = []
-                for d,val in zip(agg_val.items(),agg_val.values()):
-                    if val >= 4.9:
-                        result.append(d)
-                print "result pareto archive at %d. generation" %(i+1)
-                for item in result:
-                    print item
-                print "result weighted pareto archive at %d. generation" %(i+1)
-                for w_item in w_agg_val.items():
-                    print w_item
+                print "basic seggen,result pareto archive at %d. generation" %(i+1)
+                true_result = "0010000100000"
+                for key in pick_better_results(pareto,utility):
+                    s = ''.join(str(x) for x in key)
+                    print [key,windowdiff(true_result,s,3)]
                 break
+#                print "result weighted pareto archive at %d. generation" %(i+1)
+#                for w_item in w_agg_val.items():
+#                    print w_item
+#                break
 #            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
 #                control.clear()
 #                control = get_diff(agg_val,w_agg_val)
@@ -343,7 +349,7 @@ def generation():
             if len(mating_pool) >= 2:
                 indexes = random.sample(range(len(mating_pool)), 2)
                 children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
-                children.extend(crossover_keep_boundary(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+                #children.extend(crossover_keep_boundary(mating_pool[indexes[0]], mating_pool[indexes[1]]))
             else:
                 print "sampler larger than %d" % len(mating_pool)
                 for k in agg_val.items():
@@ -353,26 +359,27 @@ def generation():
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(children))), 2)
         children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]], Pms)
-        #mutated_pmc = mutation_Pmc(children[rand_indexes[0]], Pmc)
-        mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
-        children.append(mutated_boundary_shift)
-        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
-        children.append(mutated_boundary_add)
+        mutated_pmc = mutation_Pmc(children[rand_indexes[0]], Pmc)
+        children.append(mutated_pmc)
+        #mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
+        #children.append(mutated_boundary_shift)
+        #mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
+        #children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
-        w_agg_val = weighted_aggregation(pareto, utility)
+        #w_agg_val = weighted_aggregation(pareto, utility)
         #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
-        if i == 9:
-            values = [x for x in agg_val.values()]
-            mean_val = sum(values) / float(len(values))
-            prob_list.append(mean_val)
-        if i>0 and i%10 == 0:
-            values = [x for x in agg_val.values()]
-            mean = sum(values) / float(len(values))
-            if mean < prob_list[-1] and Pbs<=0.8:
-                Pbs+=0.05
-            print "average of population %f at %d . generation" % (mean, (i+1))
-            print "new Pbs value %f" % Pbs
-            prob_list.append(mean)
+#        if i == 9:
+#            values = [x for x in agg_val.values()]
+#            mean_val = sum(values) / float(len(values))
+#            prob_list.append(mean_val)
+#        if i>0 and i%10 == 0:
+#            values = [x for x in agg_val.values()]
+#            mean = sum(values) / float(len(values))
+#            if mean < prob_list[-1] and Pbs<=0.8:
+#                Pbs+=0.05
+#            print "average of population %f at %d . generation" % (mean, (i+1))
+#            print "new Pbs value %f" % Pbs
+#            prob_list.append(mean)
 
 #        v = [x for x in agg_val.values()]
 #        v.sort()
