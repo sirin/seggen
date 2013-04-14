@@ -25,6 +25,7 @@ from numpy.linalg import norm
 import numpy
 import matplotlib.pyplot as plt
 
+
 ''' This class provides some utilities are
     to clear words, to tokenize and to stem'''
 class Pre:
@@ -95,7 +96,7 @@ class Utility:
     refined_sentences = []
     def __init__(self):
         pre = Pre()
-        for i in open("/Users/sirinsaygili/workspace/seggen/src/N1.txt"):
+        for i in open("/Users/sirinsaygili/workspace/seggen/sampleT1.txt"):
             pre.fill_sentences_list(self.refined_sentences,pre.make_pre_steps(i))
 
     def add_word(self, all_words, word):
@@ -224,8 +225,6 @@ class Utility:
         unique = self.remove_duplicate(ind_list)
         sim = self.create_similarity_value_list_of_population(unique)
         dis = self.create_dissimilarity_value_list_of_population(unique)
-        print sim
-        print dis
         temp = self.pareto_frontier(sim, dis, unique, maxX=True, maxY=True)
 #        plt.scatter(sim,dis)
 #        p_frontX = [pair[0] for pair in temp]
@@ -248,8 +247,6 @@ class Utility:
             else:
                 if pair[1] <= p_front[-1][1]:
                     p_front.append(pair)
-        #p_frontX = [pair[0] for pair in p_front]
-        #p_frontY = [pair[1] for pair in p_front]
         return p_front
 
     ''' Return a list that removed duplicate individuals

@@ -271,7 +271,7 @@ def pick_better_results(population,utility):
 ''' Main genetic algorithm parts of code; create population,
     create pareto-archive, apply genetic algorithm operators,
     update pareto-archive '''
-def generation():
+def generation(code_type, input_type, index):
     utility = Utility()
     population = create_population(250)
     parents = []
@@ -311,16 +311,15 @@ def generation():
             else:
                 same_count += 1
             if same_count >= 30:
-                code_type = "basic"
-                input_type = "sampleT1"
-                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+".txt","w")
+                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
                 print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
-                true_result = "00000000000001000001000000000"
-                #true_result = "0010000100000"
+                reference = "00000000000001000001000000000"
+                #reference = "0010000100000"
                 for key in pick_better_results(pareto,utility):
                     s = ''.join(str(x) for x in key)
-                    r = [key,windowdiff(true_result,s,7)]
+                    r = [key,windowdiff(reference,s,9)]
                     f.write(str(r)+"\n")
+                f.write(str("program finished at %d. generation" %(i+1)))
                 f.close()
                 break
 #                print "result weighted pareto archive at %d. generation" %(i+1)
@@ -404,5 +403,6 @@ def generation():
 if __name__ == '__main__':
     print "Running Test"
     print datetime.now()
-    generation()
+    for i in xrange(10):
+        generation("basic","T30",i)
     print datetime.now()
