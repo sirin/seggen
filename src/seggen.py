@@ -23,6 +23,7 @@ from cluster import *
 import scipy
 from datetime import datetime
 from nltk.metrics import windowdiff
+import sys
 
 pareto_hardness_dict = {}
 population_fitness_dict = {}
@@ -38,7 +39,7 @@ def create_gene():
 ''' Create genome consists of binary genes '''
 def create_genome():
     genome = []
-    for i in range(13):
+    for i in range(29):
         genome.append(create_gene())
     return genome
 
@@ -310,11 +311,17 @@ def generation():
             else:
                 same_count += 1
             if same_count >= 30:
-                print "basic seggen,result pareto archive at %d. generation" %(i+1)
-                true_result = "0010000100000"
+                code_type = "basic"
+                input_type = "sampleT1"
+                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+".txt","w")
+                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
+                true_result = "00000000000001000001000000000"
+                #true_result = "0010000100000"
                 for key in pick_better_results(pareto,utility):
                     s = ''.join(str(x) for x in key)
-                    print [key,windowdiff(true_result,s,3)]
+                    r = [key,windowdiff(true_result,s,7)]
+                    f.write(str(r)+"\n")
+                f.close()
                 break
 #                print "result weighted pareto archive at %d. generation" %(i+1)
 #                for w_item in w_agg_val.items():
@@ -361,10 +368,10 @@ def generation():
         children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]], Pms)
         mutated_pmc = mutation_Pmc(children[rand_indexes[0]], Pmc)
         children.append(mutated_pmc)
-        #mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
-        #children.append(mutated_boundary_shift)
-        #mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
-        #children.append(mutated_boundary_add)
+#        mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
+#        children.append(mutated_boundary_shift)
+#        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
+#        children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
         #w_agg_val = weighted_aggregation(pareto, utility)
         #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
