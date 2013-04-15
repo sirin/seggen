@@ -24,6 +24,7 @@ from numpy import zeros,dot
 from numpy.linalg import norm
 import numpy
 import matplotlib.pyplot as plt
+import pyemf
 
 
 ''' This class provides some utilities are
@@ -230,6 +231,8 @@ class Utility:
 #        p_frontX = [pair[0] for pair in temp]
 #        p_frontY = [pair[1] for pair in temp]
 #        plt.plot(p_frontX, p_frontY)
+#        plt.xlabel("Internal cohesion of segments")
+#        plt.ylabel("Dissimilarity of adjacent segments")
 #        plt.show()
         for r in temp:
             result.append(r[2])
