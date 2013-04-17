@@ -304,39 +304,46 @@ def generation(code_type, input_type, index):
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
-            if control_group != pareto:
-                del control_group[:]
-                control_group = pareto[:]
-                same_count = 0
-            else:
-                same_count += 1
-            if same_count >= 30:
-                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
-                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
-                reference = "00000000000001000001000000000"
-                #reference = "0010000100000"
-                for key in pick_better_results(pareto,utility):
-                    s = ''.join(str(x) for x in key)
-                    r = [key,windowdiff(reference,s,9)]
-                    f.write(str(r)+"\n")
-                f.write(str("program finished at %d. generation" %(i+1)))
-                f.close()
-                break
-#                print "result weighted pareto archive at %d. generation" %(i+1)
-#                for w_item in w_agg_val.items():
-#                    print w_item
-#                break
-#            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
-#                control.clear()
-#                control = get_diff(agg_val,w_agg_val)
+#            if control_group != pareto:
+#                del control_group[:]
+#                control_group = pareto[:]
 #                same_count = 0
 #            else:
 #                same_count += 1
 #            if same_count >= 30:
-#                print "result diff between basic and weighted at %d. generation" %(i+1)
-#                for t in control.items():
-#                    print t
+#                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
+#                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
+#                reference = "00000000000001000001000000000"
+#                #reference = "0010000100000"
+#                for key in pick_better_results(pareto,utility):
+#                    s = ''.join(str(x) for x in key)
+#                    r = [key,windowdiff(reference,s,9)]
+#                    f.write(str(r)+"\n")
+#                f.write(str("program finished at %d. generation" %(i+1)))
+#                f.close()
 #                break
+#                print "result weighted pareto archive at %d. generation" %(i+1)
+#                for w_item in w_agg_val.items():
+#                    print w_item
+#                break
+            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
+                control.clear()
+                control = get_diff(agg_val,w_agg_val)
+                same_count = 0
+            else:
+                same_count += 1
+            if same_count >= 30:
+                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
+                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
+                reference = "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]"
+                #reference = "[0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]"
+                for item,key in zip(control.items(),control.keys()):
+                    s = ''.join(str(x) for x in key)
+                    r = [item,windowdiff(reference,s,9)]
+                    f.write(str(r)+"\n")
+                f.write(str("program finished at %d. generation" %(i+1)))
+                f.close()
+                break
 
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
@@ -372,7 +379,7 @@ def generation(code_type, input_type, index):
 #        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
 #        children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
-        #w_agg_val = weighted_aggregation(pareto, utility)
+        w_agg_val = weighted_aggregation(pareto, utility)
         #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
 #        if i == 9:
 #            values = [x for x in agg_val.values()]
@@ -383,8 +390,8 @@ def generation(code_type, input_type, index):
 #            mean = sum(values) / float(len(values))
 #            if mean < prob_list[-1] and Pbs<=0.8:
 #                Pbs+=0.05
-#            print "average of population %f at %d . generation" % (mean, (i+1))
-#            print "new Pbs value %f" % Pbs
+##            print "average of population %f at %d . generation" % (mean, (i+1))
+##            print "new Pbs value %f" % Pbs
 #            prob_list.append(mean)
 
 #        v = [x for x in agg_val.values()]
@@ -403,6 +410,5 @@ def generation(code_type, input_type, index):
 if __name__ == '__main__':
     print "Running Test"
     print datetime.now()
-    for i in xrange(10):
-        generation("basic","T30",i)
+    generation("weighted","T30",0)
     print datetime.now()

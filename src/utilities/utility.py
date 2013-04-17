@@ -24,7 +24,6 @@ from numpy import zeros,dot
 from numpy.linalg import norm
 import numpy
 import matplotlib.pyplot as plt
-import pyemf
 
 
 ''' This class provides some utilities are
