@@ -158,6 +158,31 @@ def crossover_keep_boundary(organism1, organism2):
         offspring2 = organism2[:pick[0]] + organism1[pick[0]:pick[1]]+ organism2[pick[1]:]
     return [offspring1,offspring2]
 
+def percentage(whole, ratio):
+    return (whole * ratio)/100
+
+def find_nth_overlapping(haystack, needle, n):
+    start = haystack.index(needle)
+    while start >= 0 and n > 1:
+        start = haystack.index(needle, start+1)
+        n -= 1
+    return start
+
+''' Two point crossover that provides cutting at the same boundary count'''
+def crossover_same_boundary_count(organism1, organism2):
+    count1 = percentage(organism1.count(1),40)
+    count2 = percentage(organism2.count(1),40)
+    ind1 = find_nth_overlapping(organism1,1,count1)
+    ind2 = find_nth_overlapping(organism2,1,count2)
+    if abs(ind1-ind2) <= 3:
+        cross = max(ind1,ind2)
+        offspring1 = organism1[:cross] + organism2[cross:]
+        offspring2 = organism2[:cross] + organism1[cross:]
+        return [True,offspring1,offspring2]
+    else:
+        return [False, organism1,organism2]
+
+
 ''' A kind of mutation based on with a probability Pms
     replaced by other individual '''
 def mutation_Pms(organism1, organism2, Pms):
@@ -304,46 +329,45 @@ def generation(code_type, input_type, index):
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
-#            if control_group != pareto:
-#                del control_group[:]
-#                control_group = pareto[:]
-#                same_count = 0
-#            else:
-#                same_count += 1
-#            if same_count >= 30:
-#                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
-#                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
-#                reference = "00000000000001000001000000000"
-#                #reference = "0010000100000"
-#                for key in pick_better_results(pareto,utility):
-#                    s = ''.join(str(x) for x in key)
-#                    r = [key,windowdiff(reference,s,9)]
-#                    f.write(str(r)+"\n")
-#                f.write(str("program finished at %d. generation" %(i+1)))
-#                f.close()
-#                break
-#                print "result weighted pareto archive at %d. generation" %(i+1)
-#                for w_item in w_agg_val.items():
-#                    print w_item
-#                break
-            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
-                control.clear()
-                control = get_diff(agg_val,w_agg_val)
+            if control_group != pareto:
+                del control_group[:]
+                control_group = pareto[:]
                 same_count = 0
             else:
                 same_count += 1
             if same_count >= 30:
-                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
                 f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
-                reference = "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]"
-                #reference = "[0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]"
-                for item,key in zip(control.items(),control.keys()):
+                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
+                reference = "00000000000001000001000000000"
+                #reference = "0010000100000"
+                for key in pick_better_results(pareto,utility):
                     s = ''.join(str(x) for x in key)
-                    r = [item,windowdiff(reference,s,9)]
+                    r = [key,windowdiff(reference,s,9)]
                     f.write(str(r)+"\n")
                 f.write(str("program finished at %d. generation" %(i+1)))
                 f.close()
                 break
+#                print "result weighted pareto archive at %d. generation" %(i+1)
+#                for w_item in w_agg_val.items():
+#                    print w_item
+#                break
+#            if set(control.items()) != set(get_diff(agg_val,w_agg_val).items()):
+#                control.clear()
+#                control = get_diff(agg_val,w_agg_val)
+#                same_count = 0
+#            else:
+#                same_count += 1
+#            if same_count >= 30:
+#                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
+#                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
+#                reference = "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]"
+#                #reference = "[0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]"
+#                for item,key in zip(control.items(),control.keys()):
+#                    s = ''.join(str(x) for x in key)
+#                    r = [item,windowdiff(reference,s,9)]
+#                    f.write(str(r)+"\n")
+#                f.close()
+#                break
 
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
@@ -361,7 +385,10 @@ def generation(code_type, input_type, index):
         for j in range(0,60):
             if len(mating_pool) >= 2:
                 indexes = random.sample(range(len(mating_pool)), 2)
-                children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+                #children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+                crossed = crossover_same_boundary_count(mating_pool[indexes[0]], mating_pool[indexes[1]])
+                if crossed[0] is True:
+                    children.extend(crossed[1:])
                 #children.extend(crossover_keep_boundary(mating_pool[indexes[0]], mating_pool[indexes[1]]))
             else:
                 print "sampler larger than %d" % len(mating_pool)
@@ -379,7 +406,7 @@ def generation(code_type, input_type, index):
 #        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
 #        children.append(mutated_boundary_add)
         agg_val = aggregation(pareto, utility)
-        w_agg_val = weighted_aggregation(pareto, utility)
+#        w_agg_val = weighted_aggregation(pareto, utility)
         #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
 #        if i == 9:
 #            values = [x for x in agg_val.values()]
@@ -410,5 +437,6 @@ def generation(code_type, input_type, index):
 if __name__ == '__main__':
     print "Running Test"
     print datetime.now()
-    generation("weighted","T30",0)
+    #for index in xrange(1,10):
+    generation("cross","T2-30",0)
     print datetime.now()
