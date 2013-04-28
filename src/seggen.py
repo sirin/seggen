@@ -296,7 +296,7 @@ def calculate_global_quality(population, utility):
     samples = random.sample(population, percentage(len(population), 10))
     agg = aggregation(samples,utility)
     total = [i for i in agg.values()]
-    return sum(total)
+    return sum(total)/len(total)
 
 ''' Main genetic algorithm parts of code; create population,
     create pareto-archive, apply genetic algorithm operators,
@@ -313,13 +313,14 @@ def generation(code_type, input_type, index):
     Pmc = 0.4
     Pbs = 0.1
     prob_list = []
-    quality = 0
+    quality = []
+    diff = []
     while i < 5000:
         if i == 0:
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
-            control_group = pareto[:]
+            quality.append(calculate_global_quality(population,utility))
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -331,25 +332,24 @@ def generation(code_type, input_type, index):
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
-            if quality != calculate_global_quality(parents,utility):
-                same_count = 0
-            else:
-                quality = calculate_global_quality(parents,utility)
-                same_count += 1
+            if i>0 and i%10 == 0:
+                instant = calculate_global_quality(parents,utility)
+                diff.append(instant - quality[-1])
+                if 0 <= diff[-1] <= 0.05:
+                #if sum(diff) < 1.0:
+                    same_count += 1
+                quality.append(instant)
             if same_count >= 10:
-                #f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
+                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
                 print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
-                #reference = "00000000000001000001000000000"
+                reference = "00000000000001000001000000000"
                 #reference = "0010000100000"
-#                for key in pick_better_results(pareto,utility):
-#                    s = ''.join(str(x) for x in key)
-#                    r = [key,windowdiff(reference,s,9)]
-#                    f.write(str(r)+"\n")
-#                f.write(str("program finished at %d. generation" %(i+1)))
-#                f.close()
-                print "quality" % quality
-                for x in agg_val.items():
-                    print x
+                for key in pick_better_results(pareto,utility):
+                    s = ''.join(str(x) for x in key)
+                    r = [key,windowdiff(reference,s,9)]
+                    f.write(str(r)+"\n")
+                f.write(str("program finished at %d. generation" %(i+1)))
+                f.close()
                 break
 #            if control_group != pareto:
 #                del control_group[:]
