@@ -39,7 +39,7 @@ def create_gene():
 ''' Create genome consists of binary genes '''
 def create_genome():
     genome = []
-    for i in range(29):
+    for i in range(49):
         genome.append(create_gene())
     return genome
 
@@ -288,7 +288,7 @@ def get_diff(basic, weighted):
 def pick_better_results(population,utility):
     result = []
     for i in population:
-        if utility.calculate_aggregation(i,alpha) >= 4.9:
+        if utility.calculate_aggregation(i,alpha) >= 4.5:
             result.append(i)
     return result
 

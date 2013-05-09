@@ -24,10 +24,12 @@ import scipy
 from datetime import datetime
 from nltk.metrics import windowdiff
 import sys
+from random import choice
 
 pareto_hardness_dict = {}
 population_fitness_dict = {}
 alpha = 5
+options = ['M1','M2','C','M1C','M2C']
 
 ''' Create binary gene '''
 def create_gene():
@@ -39,7 +41,7 @@ def create_gene():
 ''' Create genome consists of binary genes '''
 def create_genome():
     genome = []
-    for i in range(29):
+    for i in range(25):
         genome.append(create_gene())
     return genome
 
@@ -168,7 +170,7 @@ def find_nth_overlapping(haystack, needle, n):
         n -= 1
     return start
 
-''' Two point crossover that provides cutting at the same boundary count'''
+''' One point crossover that provides cutting at the same boundary count'''
 def crossover_same_boundary_count(organism1, organism2):
     count1 = percentage(organism1.count(1),40)
     count2 = percentage(organism2.count(1),40)
@@ -181,6 +183,12 @@ def crossover_same_boundary_count(organism1, organism2):
         return [True,offspring1,offspring2]
     else:
         return [False, organism1,organism2]
+
+''' One point crossover that merges two parents and cut'''
+def crossover_merge(organism1, organism2):
+    print organism1.count(1)
+    print organism2.count(1)
+    print [x if x == y else max(x,y) for x, y in zip(organism1,organism2)]
 
 
 ''' A kind of mutation based on with a probability Pms
@@ -315,12 +323,13 @@ def generation(code_type, input_type, index):
     prob_list = []
     quality = []
     diff = []
+    option = ''
     while i < 5000:
         if i == 0:
             for ind in population:
                 parents.append(ind)
             pareto = utility.non_dominated(parents)
-            quality.append(calculate_global_quality(population,utility))
+            control_group = pareto[:]
         elif i > 0:
             new_pareto = utility.non_dominated(children)
             pareto.extend(new_pareto)
@@ -332,43 +341,25 @@ def generation(code_type, input_type, index):
             parents = clear_parents(parents)
             parents = [par for par in children]
             children = clear_children(children)
-            if i>0 and i%10 == 0:
-                instant = calculate_global_quality(parents,utility)
-                diff.append(instant - quality[-1])
-                if 0 <= diff[-1] <= 0.05:
-                #if sum(diff) < 1.0:
-                    same_count += 1
-                quality.append(instant)
-            if same_count >= 10:
-                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
-                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
-                reference = "00000000000001000001000000000"
-                #reference = "0010000100000"
-                for key in pick_better_results(pareto,utility):
-                    s = ''.join(str(x) for x in key)
-                    r = [key,windowdiff(reference,s,9)]
-                    f.write(str(r)+"\n")
-                f.write(str("program finished at %d. generation" %(i+1)))
-                f.close()
-                break
-#            if control_group != pareto:
-#                del control_group[:]
-#                control_group = pareto[:]
-#                same_count = 0
-#            else:
-#                same_count += 1
-#            if same_count >= 30:
+            if control_group != pareto:
+                del control_group[:]
+                control_group = pareto[:]
+                same_count = 0
+            else:
+                same_count += 1
+            if same_count >= 40:
 #                f = open("/Users/sirinsaygili/workspace/seggen/results/"+code_type+"_"+input_type+"_"+str(index)+".txt","w")
 #                print "%s type,input %s, result at %d. generation" %(code_type, input_type, (i+1))
-#                reference = "00000000000001000001000000000"
-#                #reference = "0010000100000"
+#                reference = "0000000001000000000100001000010000001000000000000"
 #                for key in pick_better_results(pareto,utility):
 #                    s = ''.join(str(x) for x in key)
 #                    r = [key,windowdiff(reference,s,9)]
 #                    f.write(str(r)+"\n")
 #                f.write(str("program finished at %d. generation" %(i+1)))
 #                f.close()
-#                break
+                for t in agg_val.items():
+                    print t
+                break
 
         pareto_quota = random.randint(1, len(pareto))
         pop_quota = (len(parents)-pareto_quota)
@@ -386,12 +377,14 @@ def generation(code_type, input_type, index):
         for j in range(0,60):
             if len(mating_pool) >= 2:
                 indexes = random.sample(range(len(mating_pool)), 2)
-                #children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
-                crossed = crossover_same_boundary_count(mating_pool[indexes[0]], mating_pool[indexes[1]])
-                if crossed[0] is True:
-                    children.extend(crossed[1:])
+                if option == 'C' or 'M1C' or 'M2C':
+                    crossed = crossover_same_boundary_count(mating_pool[indexes[0]], mating_pool[indexes[1]])
+                    if crossed[0] is True:
+                        children.extend(crossed[1:])
+                    else:
+                        children.extend(crossover_keep_boundary(mating_pool[indexes[0]], mating_pool[indexes[1]]))
                 else:
-                    children.extend(crossover_keep_boundary(mating_pool[indexes[0]], mating_pool[indexes[1]]))
+                    children.extend(crossover(mating_pool[indexes[0]], mating_pool[indexes[1]]))
             else:
                 print "sampler larger than %d" % len(mating_pool)
                 for k in agg_val.items():
@@ -400,26 +393,38 @@ def generation(code_type, input_type, index):
 
         #ga operator: mutation
         rand_indexes = random.sample(set(range(len(children))), 2)
-#        children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]], Pms)
-#        mutated_pmc = mutation_Pmc(children[rand_indexes[0]], Pmc)
-#        children.append(mutated_pmc)
-        mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
-        children.append(mutated_boundary_shift)
-        mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
-        children.append(mutated_boundary_add)
-        agg_val = aggregation(pareto, utility)
-        #print "%d. generation pareto archive size %d"  % ((i+1), len(pareto))
-        if i == 9:
-            values = [x for x in agg_val.values()]
-            mean_val = sum(values) / float(len(values))
-            prob_list.append(mean_val)
-        if i>0 and i%10 == 0:
-            values = [x for x in agg_val.values()]
-            mean = sum(values) / float(len(values))
-            if mean < prob_list[-1] and Pbs<=0.8:
-                Pbs+=0.05
-            prob_list.append(mean)
+        if option == 'M1' or 'M2' or 'M1C' or 'M2C':
+            mutated_boundary_shift = mutation_boundary_shift(children[rand_indexes[0]], Pbs)
+            children.append(mutated_boundary_shift)
+            mutated_boundary_add = mutation_add_boundary(children[rand_indexes[0]], Pbs)
+            children.append(mutated_boundary_add)
+        else:
+            children[rand_indexes[0]] = mutation_Pms(children[rand_indexes[0]], children[rand_indexes[1]], Pms)
+            mutated_pmc = mutation_Pmc(children[rand_indexes[0]], Pmc)
+            children.append(mutated_pmc)
 
+        agg_val = aggregation(pareto, utility)
+        if option == 'M2' or 'M2C':
+            if i == 9:
+                values = [x for x in agg_val.values()]
+                mean_val = sum(values) / float(len(values))
+                prob_list.append(mean_val)
+            if i>0 and i%10 == 0:
+                values = [x for x in agg_val.values()]
+                mean = sum(values) / float(len(values))
+                if mean < prob_list[-1] and Pbs<=0.8:
+                    Pbs+=0.05
+                prob_list.append(mean)
+
+        if i == 9:
+            quality.append(calculate_global_quality(parents,utility))
+        if i>0 and i%10 == 0:
+            instant = calculate_global_quality(parents,utility)
+            if instant < quality[-1]:
+                option = choice(options)
+            quality.append(instant)
+            print quality[-1]
+            print option
 
         if i == 4999:
             for t in agg_val.items():
@@ -430,5 +435,6 @@ def generation(code_type, input_type, index):
 if __name__ == '__main__':
     print "Running Test"
     print datetime.now()
-    generation("cross","T2-30",0)
+    #mut prob degisikligi bir sonraki adimda gerceklenecek
+    generation("Mixed","N2",0)
     print datetime.now()
