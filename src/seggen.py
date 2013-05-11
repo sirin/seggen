@@ -186,9 +186,14 @@ def crossover_same_boundary_count(organism1, organism2):
 
 ''' One point crossover that merges two parents and cut'''
 def crossover_merge(organism1, organism2):
-    print organism1.count(1)
-    print organism2.count(1)
-    print [x if x == y else max(x,y) for x, y in zip(organism1,organism2)]
+    merged = []
+    merged = [x if x == y else max(x,y) for x, y in zip(organism1,organism2)]
+    avg_boundary = (merged.count(1))/2
+    indices = [item for item in range(len(merged)) if merged[item] == 1]
+    pick = random.sample(indices,avg_boundary)
+    for i in pick:
+        merged[i] = 0
+    return merged
 
 
 ''' A kind of mutation based on with a probability Pms
@@ -376,8 +381,10 @@ def generation(code_type, input_type, index):
         #ga operator: crossover
         for j in range(0,60):
             if len(mating_pool) >= 2:
-                indexes = random.sample(range(len(mating_pool)), 2)
+                indexes = random.sample(range(len(mating_pool)), 4)
                 if option == 'C' or 'M1C' or 'M2C':
+                    created = crossover_merge(mating_pool[indexes[2]], mating_pool[indexes[3]])
+                    children.append(created)
                     crossed = crossover_same_boundary_count(mating_pool[indexes[0]], mating_pool[indexes[1]])
                     if crossed[0] is True:
                         children.extend(crossed[1:])
